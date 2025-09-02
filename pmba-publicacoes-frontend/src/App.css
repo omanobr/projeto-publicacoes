@@ -142,3 +142,111 @@ header {
   background-color: #dc3545;
   color: white;
 }
+
+/* ================================================================= */
+/* NOVO ESTILO PARA OS LINKS DE VÍNCULO                              */
+/* ================================================================= */
+.link-vinculo {
+  color: inherit; /* Herda a cor do texto normal (preto) */
+  text-decoration: none; /* Remove o sublinhado padrão */
+  cursor: pointer;
+}
+
+
+/* Adicione este CSS ao seu ficheiro App.css */
+
+.trecho-alterado del {
+  text-decoration: line-through;
+  color: #dc3545; /* Vermelho */
+  background-color: #fbe9eb;
+}
+
+.trecho-alterado ins {
+  text-decoration: none;
+  color: #198754; /* Verde */
+  background-color: #e8f3ee;
+  font-weight: bold;
+}
+/* ... (seu CSS existente) ... */
+
+/* ================================================================= */
+/* ESTILOS PARA O PAINEL DE VÍNCULOS                                 */
+/* ================================================================= */
+.vinculos-panel {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.vinculos-panel h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5rem;
+}
+
+.vinculos-panel h4 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.vinculos-list {
+  list-style: none;
+  padding: 0;
+}
+
+.vinculos-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.vinculo-info a {
+  font-weight: 500;
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.vinculo-info a:hover {
+  text-decoration: underline;
+}
+
+.vinculo-info span {
+  display: block;
+  font-size: 0.9em;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.delete-vinculo-btn {
+  background-color: #fbe0e2;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.delete-vinculo-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.no-vinculos {
+  color: #6c757d;
+  font-style: italic;
+  padding: 1rem;
+  background-color: #e9ecef;
+  text-align: center;
+  border-radius: 4px;
+}
+

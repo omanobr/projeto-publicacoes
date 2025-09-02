@@ -5,25 +5,20 @@ import './AdminPage.css';
 
 function AdminPage() {
   const navigate = useNavigate();
-
-  // Estado unificado para o formulário, sem o título separado
   const [formData, setFormData] = useState({
     numero: '',
     tipo: 'OFICIO',
     dataPublicacao: '',
     conteudoHtml: '',
   });
-
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(null);
 
-  // Handler unificado para os inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({ ...prevState, [name]: value }));
   };
 
-  // Handler para o editor
   const handleContentChange = (content) => {
     setFormData(prevState => ({ ...prevState, conteudoHtml: content }));
   };
@@ -33,7 +28,6 @@ function AdminPage() {
     setEnviando(true);
     setErro(null);
 
-    // O objeto agora corresponde exatamente ao CriacaoPublicacaoDTO
     const novaPublicacao = {
         numero: formData.numero,
         tipo: formData.tipo,
@@ -48,20 +42,18 @@ function AdminPage() {
     })
     .then(response => {
         if (!response.ok) throw new Error('Falha ao criar a publicação.');
-        // Não precisamos mais do response.json()
         alert('Publicação criada com sucesso!');
-        navigate(`/`); // <-- NAVEGA PARA A PÁGINA INICIAL
+        navigate(`/`); // Navega para a página inicial após o sucesso
     })
     .catch(err => setErro(err.message))
     .finally(() => setEnviando(false));
-};
+  };
 
   return (
     <div className="admin-page">
       <Link to="/">&larr; Voltar para a lista</Link>
       <h2>Nova Publicação</h2>
-      <p>Para definir o título, digite-o no editor abaixo e use o botão "H1" na barra de ferramentas.</p>
-
+      <p>Para definir o título, digite-o no editor abaixo e use o botão "Título".</p>
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-group">
           <label htmlFor="numero">Número</label>

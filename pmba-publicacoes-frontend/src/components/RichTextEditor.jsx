@@ -1,10 +1,10 @@
 import { useEditor, EditorContent } from '@tiptap/react';
-import { useEffect, useState } from 'react'; // <-- 1. Importe o useState
+import { useEffect, useState } from 'react';
 import StarterKit from '@tiptap/starter-kit';
 import { MetaMark } from '../tiptap-extensions/metaMark';
 import './RichTextEditor.css';
 
-const MenuBar = ({ editor, onVincularClick }) => {
+const MenuBar = ({ editor, onRevogarClick, onAlterarClick }) => {
   if (!editor) return null;
 
   const setAsTitle = () => {
@@ -21,13 +21,21 @@ const MenuBar = ({ editor, onVincularClick }) => {
         Título
       </button>
       
+      <div className="separator"></div>
+
       <button
         type="button"
-        onClick={onVincularClick}
-        // AGORA A LÓGICA ESTÁ MAIS PRECISA
+        onClick={onRevogarClick}
         disabled={editor.state.selection.empty}
       >
-        Vincular 🔗
+        Revogar Trecho 🚮
+      </button>
+      <button
+        type="button"
+        onClick={onAlterarClick}
+        disabled={editor.state.selection.empty}
+      >
+        Alterar Trecho ✍️
       </button>
 
       <div className="separator"></div>
@@ -37,21 +45,14 @@ const MenuBar = ({ editor, onVincularClick }) => {
   );
 };
 
-const RichTextEditor = ({ content, onContentChange, onEditorInstance, onVincularClick }) => {
-  
-  // 2. ADICIONAMOS UM ESTADO PARA FORÇAR A ATUALIZAÇÃO DA INTERFACE
+const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarClick, onAlterarClick }) => {
   const [_, setForceUpdate] = useState(0);
 
   const editor = useEditor({
     extensions: [StarterKit, MetaMark],
     content: content || '',
-    onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML());
-    },
-    // 3. OUVINTE DE SELEÇÃO: A CADA MUDANÇA NA SELEÇÃO, FORÇAMOS UMA RE-RENDERIZAÇÃO
-    onSelectionUpdate: () => {
-      setForceUpdate(val => val + 1); // Apenas muda o estado para forçar o refresh
-    }
+    onUpdate: ({ editor }) => { onContentChange(editor.getHTML()); },
+    onSelectionUpdate: () => { setForceUpdate(val => val + 1); }
   });
   
   useEffect(() => {
@@ -62,7 +63,7 @@ const RichTextEditor = ({ content, onContentChange, onEditorInstance, onVincular
 
   return (
     <div className="tiptap-container">
-      <MenuBar editor={editor} onVincularClick={onVincularClick} />
+      <MenuBar editor={editor} onRevogarClick={onRevogarClick} onAlterarClick={onAlterarClick} />
       <EditorContent editor={editor} />
     </div>
   );

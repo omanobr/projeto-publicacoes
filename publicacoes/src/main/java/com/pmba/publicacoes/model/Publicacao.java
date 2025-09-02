@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.ColumnDefault; // <-- IMPORTANTE
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -25,18 +25,18 @@ public class Publicacao {
     private String tipo;
     private LocalDate dataPublicacao;
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String conteudoHtml;
-
-    // =================================================================
-    // A SOLUÇÃO DEFINITIVA ESTÁ AQUI
-    // =================================================================
+    // VVV--- ALTERAÇÃO AQUI ---VVV
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatusPublicacao status = StatusPublicacao.ATIVA;
-    // =================================================================
+    @ColumnDefault("'ATIVA'")
+    private StatusPublicacao status;
 
-    @OneToMany(mappedBy = "publicacaoOrigem", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // VVV--- ALTERAÇÃO AQUI ---VVV
+    // @Lob // REMOVA ESTA LINHA
+    @Column(columnDefinition = "TEXT")
+    private String conteudoHtml;
+    // ^^^--- FIM DA ALTERAÇÃO ---^^^
+
+    @OneToMany(mappedBy = "publicacaoOrigem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<VinculoNormativo> vinculosGerados = new HashSet<>();
 }

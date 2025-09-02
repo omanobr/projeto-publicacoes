@@ -1,7 +1,7 @@
 package com.pmba.publicacoes.controller;
 
 import com.pmba.publicacoes.dto.CriarVinculoRequestDTO;
-import com.pmba.publicacoes.dto.VinculoResponseDTO; // <-- Importe o novo DTO
+import com.pmba.publicacoes.dto.VinculoResponseDTO;
 import com.pmba.publicacoes.service.VinculoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,13 +17,13 @@ public class VinculoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    // VVV--- TIPO DE RETORNO ATUALIZADO ---VVV
     public VinculoResponseDTO criarVinculo(@RequestBody CriarVinculoRequestDTO request) {
         return vinculoService.criarVinculo(
                 request.getPublicacaoOrigemId(),
                 request.getPublicacaoDestinoId(),
                 request.getTipoVinculo(),
-                request.getTextoDoTrecho()
+                request.getTextoDoTrecho(),
+                request.getTextoNovo() // <-- PASSANDO O NOVO TEXTO
         );
     }
 

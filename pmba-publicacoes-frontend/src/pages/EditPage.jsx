@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import RichTextEditor from '../components/RichTextEditor';
 import RevogacaoModal from '../components/RevogacaoModal';
+import AlteracaoModal from '../components/AlteracaoModal';
+import VinculosPanel from '../components/VinculosPanel';
 import './AdminPage.css';
 
 function EditPage() {
@@ -12,7 +14,8 @@ function EditPage() {
     const [erro, setErro] = useState(null);
     const [enviando, setEnviando] = useState(false);
     
-    const [isRevogacaoParcialModalOpen, setIsRevogacaoParcialModalOpen] = useState(false);
+    const [isRevogacaoModalOpen, setIsRevogacaoModalOpen] = useState(false);
+    const [isAlteracaoModalOpen, setIsAlteracaoModalOpen] = useState(false);
     const [isRevogacaoTotalModalOpen, setIsRevogacaoTotalModalOpen] = useState(false);
     
     const [textoSelecionado, setTextoSelecionado] = useState('');
@@ -20,7 +23,7 @@ function EditPage() {
 
     const fetchData = useCallback(() => {
         setLoading(true);
-        fetch(`http://localhost:8080/api/publicacoes/${id}`)
+        fetch(`http://localhost:8080/api/publicacoes/${id}/for-editing`) 
             .then(res => {
                 if (!res.ok) throw new Error(`Publicação não encontrada (Status: ${res.status})`);
                 return res.json();
@@ -40,12 +43,31 @@ function EditPage() {
         fetchData();
     }, [fetchData]);
 
-    const handleChange = (e) => {
+    const handleDeleteVinculo = useCallback((vinculoId) => {
+        if (window.confirm('Tem a certeza que deseja excluir este vínculo? Esta ação não pode ser desfeita.')) {
+            fetch(`http://localhost:8080/api/vinculos/${vinculoId}`, {
+                method: 'DELETE',
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Falha ao excluir o vínculo.');
+                }
+                alert('Vínculo excluído com sucesso!');
+                fetchData();
+            })
+            .catch(err => {
+                alert(err.message);
+                setErro(err.message);
+            });
+        }
+    }, [fetchData]);
+
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({ ...prevState, [name]: value }));
-    };
+    }, []);
 
-    const handleContentChange = (newContent) => {
+    const handleContentChange = useCallback((newContent) => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newContent;
         const titleElement = tempDiv.querySelector('span[data-meta="titulo"]');
@@ -54,9 +76,9 @@ function EditPage() {
             conteudoHtml: newContent,
             titulo: titleElement ? titleElement.textContent : 'Título não definido',
         }));
-    };
+    }, []);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = useCallback((event) => {
         event.preventDefault();
         setEnviando(true);
         setErro(null);
@@ -75,17 +97,31 @@ function EditPage() {
         })
         .catch(err => setErro(err.message))
         .finally(() => setEnviando(false));
-    };
+    }, [formData, id, navigate]);
 
-    const handleEditorInstance = (editor) => { setEditorInstance(editor); };
+    const handleEditorInstance = useCallback((editor) => {
+        setEditorInstance(editor);
+    }, []);
 
-    const handleRevogarTrecho = () => {
+    const handleRevogarTrechoClick = () => {
         if (!editorInstance) return;
         const { from, to } = editorInstance.state.selection;
         const selectedText = editorInstance.state.doc.textBetween(from, to);
         if (selectedText) {
             setTextoSelecionado(selectedText);
-            setIsRevogacaoParcialModalOpen(true);
+            setIsRevogacaoModalOpen(true);
+        } else {
+            alert('Por favor, selecione um trecho de texto no editor primeiro.');
+        }
+    };
+
+    const handleAlterarTrechoClick = () => {
+        if (!editorInstance) return;
+        const { from, to } = editorInstance.state.selection;
+        const selectedText = editorInstance.state.doc.textBetween(from, to);
+        if (selectedText) {
+            setTextoSelecionado(selectedText);
+            setIsAlteracaoModalOpen(true);
         } else {
             alert('Por favor, selecione um trecho de texto no editor primeiro.');
         }
@@ -97,6 +133,27 @@ function EditPage() {
             publicacaoDestinoId: parseInt(id),
             tipoVinculo: tipoVinculoEscolhido,
             textoDoTrecho: textoSelecionado,
+            textoNovo: null,
+        };
+        fetch(`http://localhost:8080/api/vinculos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vinculoData),
+        })
+            .then(() => {
+                alert('Vínculo criado com sucesso!');
+                fetchData();
+            })
+            .catch(err => setErro(err.message));
+    };
+
+    const handleConfirmAlteracao = (publicacaoOrigem, textoNovo) => {
+        const vinculoData = {
+            publicacaoOrigemId: publicacaoOrigem.id,
+            publicacaoDestinoId: parseInt(id),
+            tipoVinculo: 'ALTERA',
+            textoDoTrecho: textoSelecionado,
+            textoNovo: textoNovo,
         };
         fetch(`http://localhost:8080/api/vinculos`, {
             method: 'POST',
@@ -104,17 +161,17 @@ function EditPage() {
             body: JSON.stringify(vinculoData),
         })
         .then(res => {
-            if (!res.ok) throw new Error('Falha ao criar o vínculo.');
+            if (!res.ok) throw new Error('Falha ao criar o vínculo de alteração.');
             return res.json();
         })
         .then(() => {
-                alert('Vínculo criado com sucesso!');
-                fetchData();
-            })
-            .catch(err => setErro(err.message));
+            alert('Alteração vinculada com sucesso!');
+            fetchData();
+        })
+        .catch(err => setErro(err.message));
     };
 
-    const handleConfirmRevogacaoTotal = (publicacaoOrigem) => {
+    const handleConfirmRevogacaoTotal = useCallback((publicacaoOrigem) => {
         const vinculoData = {
             publicacaoOrigemId: publicacaoOrigem.id,
             publicacaoDestinoId: parseInt(id),
@@ -133,7 +190,7 @@ function EditPage() {
             navigate(`/publicacao/${id}`);
         })
         .catch(err => setErro(err.message));
-    };
+    }, [id, navigate]);
 
     if (loading) return <p>Carregando...</p>;
     if (erro) return <p>Erro: {erro}</p>;
@@ -170,7 +227,8 @@ function EditPage() {
                         content={formData.conteudoHtml}
                         onContentChange={handleContentChange}
                         onEditorInstance={handleEditorInstance}
-                        onVincularClick={handleRevogarTrecho}
+                        onRevogarClick={handleRevogarTrechoClick}
+                        onAlterarClick={handleAlterarTrechoClick}
                     />
                 </div>
                 {erro && <p className="error-message">{erro}</p>}
@@ -188,10 +246,20 @@ function EditPage() {
                 </div>
             </form>
 
+            <VinculosPanel 
+                vinculosGerados={formData.vinculosGerados}
+                vinculosRecebidos={formData.vinculosRecebidos}
+                onDeleteVinculo={handleDeleteVinculo}
+            />
             <RevogacaoModal
-                isOpen={isRevogacaoParcialModalOpen}
-                onClose={() => setIsRevogacaoParcialModalOpen(false)}
+                isOpen={isRevogacaoModalOpen}
+                onClose={() => setIsRevogacaoModalOpen(false)}
                 onConfirm={handleConfirmRevogacaoParcial}
+            />
+            <AlteracaoModal
+                isOpen={isAlteracaoModalOpen}
+                onClose={() => setIsAlteracaoModalOpen(false)}
+                onConfirm={handleConfirmAlteracao}
             />
             <RevogacaoModal
                 isOpen={isRevogacaoTotalModalOpen}
@@ -203,7 +271,5 @@ function EditPage() {
     );
 }
 
-// =================================================================
-// A LINHA QUE FALTAVA
-// =================================================================
 export default EditPage;
+

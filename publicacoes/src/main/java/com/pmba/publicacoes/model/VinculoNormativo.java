@@ -2,12 +2,12 @@ package com.pmba.publicacoes.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode; // Importe esta classe
-import lombok.ToString; // Importe esta classe
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
-@EqualsAndHashCode(exclude = {"publicacaoOrigem", "publicacaoDestino"}) // <-- ADICIONE ESTA LINHA
-@ToString(exclude = {"publicacaoOrigem", "publicacaoDestino"}) // <-- ADICIONE ESTA LINHA
+@EqualsAndHashCode(exclude = {"publicacaoOrigem", "publicacaoDestino"})
+@ToString(exclude = {"publicacaoOrigem", "publicacaoDestino"})
 @Entity
 public class VinculoNormativo {
 
@@ -15,22 +15,27 @@ public class VinculoNormativo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relacionamento: Muitos Vínculos podem apontar para UMA Publicação de origem.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publicacao_origem_id", nullable = false)
-    private Publicacao publicacaoOrigem; // O documento que está sendo alterado
+    private Publicacao publicacaoOrigem;
 
-    // Relacionamento: Muitos Vínculos podem ser criados por UMA Publicação de destino.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publicacao_destino_id", nullable = false)
-    private Publicacao publicacaoDestino; // O documento que efetua a alteração
+    private Publicacao publicacaoDestino;
 
-    @Enumerated(EnumType.STRING) // Grava o nome do Enum (REVOGA) em vez de um número (0).
+    @Enumerated(EnumType.STRING)
     private TipoVinculo tipoVinculo;
 
-    // No futuro, o frontend vai gerar um ID para um trecho específico do HTML.
-    // Por enquanto, vamos deixar um texto simples.
     private String seletorTrecho;
 
+    @Column(columnDefinition = "TEXT")
     private String textoDoTrecho;
+
+    // =================================================================
+    // NOVO CAMPO PARA GUARDAR O TEXTO DA ALTERAÇÃO
+    // =================================================================
+    @Column(columnDefinition = "TEXT")
+    private String textoNovo;
+    // =================================================================
 }
+

@@ -12,4 +12,5 @@ public class VinculoResponseDTO {
     private String publicacaoDestinoTitulo;
     private TipoVinculo tipoVinculo;
     private String textoDoTrecho;
+    private String textoNovo; // <-- Adicionado para garantir que a resposta o inclua
 }

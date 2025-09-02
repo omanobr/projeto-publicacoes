@@ -9,4 +9,5 @@ public class CriarVinculoRequestDTO {
     private Long publicacaoDestinoId;
     private TipoVinculo tipoVinculo;
     private String textoDoTrecho;
+    private String textoNovo; // <-- NOVO CAMPO
 }

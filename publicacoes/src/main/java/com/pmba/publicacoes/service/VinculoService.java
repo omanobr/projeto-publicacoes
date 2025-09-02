@@ -20,7 +20,7 @@ public class VinculoService {
     private PublicacaoRepository publicacaoRepository;
 
     @Transactional
-    public VinculoResponseDTO criarVinculo(Long publicacaoOrigemId, Long publicacaoDestinoId, TipoVinculo tipoVinculo, String textoDoTrecho) {
+    public VinculoResponseDTO criarVinculo(Long publicacaoOrigemId, Long publicacaoDestinoId, TipoVinculo tipoVinculo, String textoDoTrecho, String textoNovo) {
         Publicacao origem = publicacaoRepository.findById(publicacaoOrigemId)
                 .orElseThrow(() -> new RuntimeException("Publicação de origem não encontrada com id: " + publicacaoOrigemId));
         Publicacao destino = publicacaoRepository.findById(publicacaoDestinoId)
@@ -31,6 +31,7 @@ public class VinculoService {
         novoVinculo.setPublicacaoDestino(destino);
         novoVinculo.setTipoVinculo(tipoVinculo);
         novoVinculo.setTextoDoTrecho(textoDoTrecho);
+        novoVinculo.setTextoNovo(textoNovo); // Salva o novo texto
 
         VinculoNormativo salvo = vinculoRepository.save(novoVinculo);
         return convertToResponseDto(salvo);
@@ -56,6 +57,15 @@ public class VinculoService {
         return convertToResponseDto(salvo);
     }
 
+    // NOVO MÉTODO PARA EXCLUIR UM VÍNCULO
+    @Transactional
+    public void excluirVinculo(Long vinculoId) {
+        if (!vinculoRepository.existsById(vinculoId)) {
+            throw new RuntimeException("Vínculo não encontrado com id: " + vinculoId);
+        }
+        vinculoRepository.deleteById(vinculoId);
+    }
+
     private VinculoResponseDTO convertToResponseDto(VinculoNormativo vinculo) {
         VinculoResponseDTO dto = new VinculoResponseDTO();
         dto.setId(vinculo.getId());
@@ -65,6 +75,8 @@ public class VinculoService {
         dto.setPublicacaoDestinoTitulo(vinculo.getPublicacaoDestino().getTitulo());
         dto.setTipoVinculo(vinculo.getTipoVinculo());
         dto.setTextoDoTrecho(vinculo.getTextoDoTrecho());
+        dto.setTextoNovo(vinculo.getTextoNovo());
         return dto;
     }
 }
+

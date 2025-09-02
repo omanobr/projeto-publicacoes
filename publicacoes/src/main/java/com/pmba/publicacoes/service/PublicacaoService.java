@@ -3,13 +3,11 @@ package com.pmba.publicacoes.service;
 import com.pmba.publicacoes.dto.CriacaoPublicacaoDTO;
 import com.pmba.publicacoes.dto.PublicacaoDetailDTO;
 import com.pmba.publicacoes.dto.PublicacaoListDTO;
-import com.pmba.publicacoes.dto.VinculoSimpleDTO;
 import com.pmba.publicacoes.model.Publicacao;
 import com.pmba.publicacoes.model.StatusPublicacao;
 import com.pmba.publicacoes.model.VinculoNormativo;
 import com.pmba.publicacoes.repository.PublicacaoRepository;
 import com.pmba.publicacoes.repository.VinculoNormativoRepository;
-import org.hibernate.Hibernate; // <-- IMPORTANTE
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -20,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,18 +33,40 @@ public class PublicacaoService {
     }
 
     @Transactional
-    public void criarComMetadadosExtraidos(String numero, String tipo, LocalDate dataPublicacao, String conteudoHtml) {
-        String tituloFinal;
-        Document doc = Jsoup.parse(conteudoHtml);
+    public Publicacao criarComMetadadosExtraidos(CriacaoPublicacaoDTO dadosRecebidos) {
+        Publicacao publicacaoParaSalvar = new Publicacao();
+        publicacaoParaSalvar.setStatus(StatusPublicacao.ATIVA); // Garantindo o status na criação
+
+        String htmlRecebido = dadosRecebidos.getConteudoHtml();
+        Document doc = Jsoup.parse(htmlRecebido);
         Element tituloElement = doc.selectFirst("span[data-meta=titulo]");
+
         if (tituloElement != null) {
-            tituloFinal = tituloElement.text();
+            publicacaoParaSalvar.setTitulo(tituloElement.text());
         } else {
-            tituloFinal = "Título não definido";
+            publicacaoParaSalvar.setTitulo("Título não definido");
         }
-        String sanitizedHtml = Jsoup.clean(conteudoHtml, safelistConfigurado());
-        publicacaoRepository.criarNovaPublicacao(tituloFinal, numero, tipo, dataPublicacao, sanitizedHtml);
+
+        String sanitizedHtml = Jsoup.clean(htmlRecebido, safelistConfigurado());
+        publicacaoParaSalvar.setConteudoHtml(sanitizedHtml);
+
+        publicacaoParaSalvar.setNumero(dadosRecebidos.getNumero());
+        publicacaoParaSalvar.setTipo(dadosRecebidos.getTipo());
+        publicacaoParaSalvar.setDataPublicacao(dadosRecebidos.getDataPublicacao());
+
+        return publicacaoRepository.save(publicacaoParaSalvar);
     }
+
+    @Transactional(readOnly = true)
+    public List<PublicacaoListDTO> findAllAsListDto() {
+        List<Publicacao> publicacoes = publicacaoRepository.findAll();
+        // A conversão agora é simples e segura, sem acessar relacionamentos complexos.
+        return publicacoes.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+    }
+
+    // --- MÉTODOS EXISTENTES E AUXILIARES (COMPLETOS) ---
 
     @Transactional
     public PublicacaoDetailDTO atualizarComMetadadosExtraidos(Long id, Publicacao dadosRecebidos) {
@@ -93,30 +112,6 @@ public class PublicacaoService {
         return dto;
     }
 
-    // =================================================================
-    // A LÓGICA FINAL E À PROVA DE FALHAS
-    // =================================================================
-    @Transactional(readOnly = true)
-    public List<PublicacaoListDTO> findAllAsListDto() {
-        // Etapa 1: Busca apenas as publicações. Simples e seguro.
-        List<Publicacao> publicacoes = publicacaoRepository.findAll();
-
-        // Etapa 2: "Acorda" manualmente a lista de vínculos de cada publicação.
-        // O Hibernate.initialize() força a busca dos dados "preguiçosos"
-        // enquanto a transação ainda está aberta.
-        for (Publicacao p : publicacoes) {
-            Hibernate.initialize(p.getVinculosGerados());
-        }
-
-        // Agora que todos os dados estão na memória, a conversão para DTO é segura.
-        return publicacoes.stream()
-                .map(this::convertToListDto)
-                .collect(Collectors.toList());
-    }
-    // =================================================================
-
-    // --- MÉTODOS AUXILIARES ---
-
     private PublicacaoDetailDTO convertToDetailDto(Publicacao publicacao) {
         PublicacaoDetailDTO dto = new PublicacaoDetailDTO();
         dto.setId(publicacao.getId());
@@ -129,7 +124,6 @@ public class PublicacaoService {
         return dto;
     }
 
-    // MÉTODO AUXILIAR ATUALIZADO E SIMPLIFICADO
     private PublicacaoListDTO convertToListDto(Publicacao publicacao) {
         PublicacaoListDTO dto = new PublicacaoListDTO();
         dto.setId(publicacao.getId());
@@ -138,7 +132,6 @@ public class PublicacaoService {
         dto.setTipo(publicacao.getTipo());
         dto.setDataPublicacao(publicacao.getDataPublicacao());
         dto.setStatus(publicacao.getStatus());
-        // A conversão da lista de vínculos foi removida daqui.
         return dto;
     }
 

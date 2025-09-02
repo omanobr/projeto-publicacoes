@@ -11,7 +11,7 @@ public class PublicacaoListDTO {
     private String numero;
     private String tipo;
     private LocalDate dataPublicacao;
-    private StatusPublicacao status; // Mantemos o status para a tag "REVOGADO"
+    private StatusPublicacao status;
 
-    // O campo problemático 'private Set<VinculoSimpleDTO> vinculosGerados;' FOI REMOVIDO.
+    // O campo 'vinculosGerados' foi removido para eliminar a complexidade e a fonte do erro.
 }

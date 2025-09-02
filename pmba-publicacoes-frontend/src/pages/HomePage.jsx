@@ -1,45 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // <-- 1. ADICIONE ESTE IMPORT
+import { Link } from 'react-router-dom';
 import '../App.css';
 
 function HomePage() {
-  const [publicacoes, setPublicacoes] = useState([]); // <-- Garanta que começa com []
+  const [publicacoes, setPublicacoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
- useEffect(() => {
-  fetch('http://localhost:8080/api/publicacoes')
-    .then(response => response.json())
-    .then(data => {
-      if (Array.isArray(data)) {
+  useEffect(() => {
+    setLoading(true);
+    fetch('http://localhost:8080/api/publicacoes')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Falha ao buscar publicações. O servidor pode estar com problemas.');
+        }
+        return response.json();
+      })
+      .then(data => {
         setPublicacoes(data);
-      } else if (data && Array.isArray(data.content)) {
-        setPublicacoes(data.content); // caso backend esteja paginando
-      } else {
-        console.error("Formato inesperado da resposta:", data);
-        setPublicacoes([]);
-      }
-    })
-    .catch(error => {
-      console.error("Erro ao buscar dados:", error);
-      setPublicacoes([]);
-    });
-}, []);
+        setError(null);
+      })
+      .catch(err => {
+        console.error("Erro detalhado:", err);
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <p>A carregar publicações...</p>;
+  if (error) return <p style={{ color: 'red' }}>Erro: {error}</p>;
 
   return (
     <div>
       <h2>Últimas Publicações</h2>
       <div className="lista-publicacoes">
         {publicacoes.length === 0 ? (
-          <p>Carregando publicações...</p>
+          <p>Nenhuma publicação encontrada.</p>
         ) : (
           <ul>
             {publicacoes.map(pub => (
-              // 2. MODIFIQUE O 'li' PARA USAR O COMPONENTE LINK
               <li key={pub.id} className={pub.status === 'REVOGADA' ? 'revogado-item' : ''}>
                 <Link to={`/publicacao/${pub.id}`}>
                   {pub.titulo}
-                  {/* Se o status for REVOGADA, mostra a tag */}
                   {pub.status === 'REVOGADA' && <span className="status-tag revogado">REVOGADO</span>}
                 </Link>
+                <div className="pub-details">
+                  <span>{pub.tipo} Nº {pub.numero}</span>
+                  <span>{new Date(pub.dataPublicacao).toLocaleDateString()}</span>
+                </div>
               </li>
             ))}
           </ul>
@@ -49,4 +59,4 @@ function HomePage() {
   );
 }
 
-export default HomePage; // Exporte HomePage
+export default HomePage;

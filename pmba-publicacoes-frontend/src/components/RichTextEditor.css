@@ -1,0 +1,56 @@
+.tiptap-container {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.tiptap {
+  padding: 0.75rem;
+  min-height: 250px;
+  outline: none;
+}
+
+.tiptap > * {
+  margin-bottom: 0.75em;
+}
+
+.tiptap-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+  background-color: #f8f9fa;
+}
+
+.tiptap-menu button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.tiptap-menu button:hover {
+  background-color: #e9ecef;
+}
+
+.tiptap-menu button.is-active {
+  background-color: #d0ebff;
+  border-color: #99cfff;
+}
+
+/* Estilo para o separador na barra de ferramentas */
+.separator {
+  width: 1px;
+  height: 1.25rem;
+  background-color: #ddd;
+  margin: 0 0.5rem;
+}
+
+/* ESTILO PARA NOSSA MARCAÇÃO CUSTOMIZADA DENTRO DO EDITOR */
+.tiptap span[data-meta="titulo"] {
+  background-color: #e6f7ff; /* Fundo azul claro */
+  border-bottom: 2px solid #91d5ff; /* Borda inferior azul */
+  padding: 2px 0;
+}

@@ -1,0 +1,144 @@
+/*
+  =============================================================
+  A NOVA ABORDAGEM DE CENTRALIZAÇÃO
+  =============================================================
+*/
+body {
+  /* 1. Transforma o corpo da página em um contêiner flexível */
+  display: flex;
+  
+  /* 2. Empilha os itens verticalmente (um em cima do outro) */
+  flex-direction: column;
+
+  /* 3. A MÁGICA: Centraliza todos os itens filhos no eixo horizontal */
+  align-items: center; 
+  
+  /* Garante que o corpo ocupe no mínimo 100% da altura da tela */
+  min-height: 100vh;
+
+  /* Estilos visuais que já tínhamos */
+  margin: 0;
+  background-color: #f0f2f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+}
+
+
+/*
+  Agora, o .app-container não precisa mais se centralizar.
+  Ele só precisa definir sua largura.
+*/
+.app-container {
+  width: 100%;      /* Ocupa 100% do espaço que o 'body' permite */
+  max-width: 960px; /* Mas nunca ultrapassa 960px */
+  margin-top: 2rem; /* Apenas uma margem no topo */
+  margin-bottom: 2rem; /* E na base */
+  padding: 1rem;
+}
+
+/* O resto do CSS continua o mesmo para estilização */
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #0056b3;
+}
+
+.lista-publicacoes ul {
+  list-style: none;
+  padding: 0;
+}
+
+.lista-publicacoes li {
+  background-color: #ffffff;
+  margin-bottom: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.lista-publicacoes li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lista-publicacoes a {
+  text-decoration: none;
+  color: #0056b3;
+  font-weight: 500;
+}
+
+.lista-publicacoes a:hover {
+  text-decoration: underline;
+}
+
+.publicacao-detalhe {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.publicacao-detalhe a {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.conteudo-publicacao {
+  line-height: 1.6;
+}
+
+.trecho-alterado {
+  position: relative;
+  cursor: help;
+  background-color: #fff8e1;
+}
+
+.trecho-alterado:hover::after {
+  content: attr(data-vinculo-info);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 5px;
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.ql-toolbar .ql-revogarTrecho::before {
+  content: "Vincular 🔗"; /* O texto que aparecerá no botão */
+  font-weight: bold;
+  font-size: 12px;
+}
+.status-tag {
+  margin-left: 1rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8em;
+  font-weight: bold;
+  border-radius: 10px;
+  color: white;
+}
+.status-tag.revogado {
+  background-color: #dc3545; /* Vermelho */
+}
+.revogado-item {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+.form-actions {
+  display: flex;
+  gap: 1rem;
+}
+.revoke-button {
+  background-color: #dc3545;
+  color: white;
+}

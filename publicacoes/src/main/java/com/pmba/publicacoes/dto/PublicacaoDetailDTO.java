@@ -13,5 +13,6 @@ public class PublicacaoDetailDTO {
     private String tipo;
     private LocalDate dataPublicacao;
     private String conteudoHtml; // A diferença principal está aqui
-    private StatusPublicacao status; // <-- Adicione esta linha
+    private StatusPublicacao status;
+    private String bgo;
 }

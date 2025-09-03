@@ -62,7 +62,8 @@ public class PublicacaoService {
                 dadosRecebidos.getNumero(),
                 dadosRecebidos.getTipo(),
                 dadosRecebidos.getDataPublicacao(),
-                sanitizedHtml
+                sanitizedHtml,
+                dadosRecebidos.getBgo()
         );
     }
 
@@ -81,6 +82,7 @@ public class PublicacaoService {
         publicacaoParaSalvar.setTipo(dadosRecebidos.getTipo());
         publicacaoParaSalvar.setDataPublicacao(dadosRecebidos.getDataPublicacao());
         publicacaoParaSalvar.setConteudoHtml(sanitizedHtml);
+        publicacaoParaSalvar.setBgo(dadosRecebidos.getBgo());
         Publicacao salvo = publicacaoRepository.save(publicacaoParaSalvar);
         return convertToDetailDto(salvo);
     }
@@ -109,6 +111,7 @@ public class PublicacaoService {
         dto.setTipo(publicacao.getTipo());
         dto.setDataPublicacao(publicacao.getDataPublicacao());
         dto.setStatus(publicacao.getStatus());
+        dto.setBgo(publicacao.getBgo());
         String conteudoParaEdicao = processarVinculos(publicacao, true);
         dto.setConteudoHtml(conteudoParaEdicao);
         List<VinculoSimpleDTO> vinculosGerados = publicacao.getVinculosGerados().stream()
@@ -203,6 +206,7 @@ public class PublicacaoService {
         dto.setDataPublicacao(publicacao.getDataPublicacao());
         dto.setConteudoHtml(publicacao.getConteudoHtml());
         dto.setStatus(publicacao.getStatus());
+        dto.setBgo(publicacao.getBgo());
         return dto;
     }
 

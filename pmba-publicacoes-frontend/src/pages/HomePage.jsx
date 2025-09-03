@@ -48,6 +48,7 @@ function HomePage() {
                 </Link>
                 <div className="pub-details">
                   <span>{pub.tipo} Nº {pub.numero}</span>
+                  <span style={{ margin: '0 8px' }}>|</span> 
                   <span>{new Date(pub.dataPublicacao).toLocaleDateString()}</span>
                 </div>
               </li>

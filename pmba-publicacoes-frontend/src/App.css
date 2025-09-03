@@ -291,3 +291,12 @@ header {
   background-color: #dff0d8; /* Fundo verde claro */
   font-weight: 500;
 }
+/* Estilo para o texto de aviso do BGO */
+.disclaimer-text {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+  font-style: italic;
+  color: #dc3545; /* Vermelho */
+}

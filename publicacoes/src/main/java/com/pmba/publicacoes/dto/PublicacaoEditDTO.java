@@ -22,6 +22,7 @@ public class PublicacaoEditDTO {
     private LocalDate dataPublicacao;
     private String conteudoHtml; // O conteúdo "limpo", sem processamento de vínculos
     private StatusPublicacao status;
+    private String bgo;
 
     // Lista de vínculos que ESTA publicação cria (ela é a ORIGEM)
     private List<VinculoSimpleDTO> vinculosGerados;

@@ -42,7 +42,6 @@ function PublicacaoPage() {
         </Link>
       </div>
       {/* ^^^--- FIM DO NOVO BLOCO ---^^^ */}
-
       <h2>
             {publicacao.titulo}
             {/* Se o status for REVOGADA, mostra a tag */}
@@ -54,6 +53,11 @@ function PublicacaoPage() {
         className="conteudo-publicacao"
         dangerouslySetInnerHTML={{ __html: publicacao.conteudoHtml }}
       />
+      {publicacao.bgo && (
+        <div className="disclaimer-text">
+          <p>Este texto não substitui o publicado no BGO nº {publicacao.bgo}</p>
+        </div>
+      )}
     </div>
   );
 }

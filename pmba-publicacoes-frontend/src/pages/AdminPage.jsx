@@ -10,6 +10,7 @@ function AdminPage() {
     tipo: 'OFICIO',
     dataPublicacao: '',
     conteudoHtml: '',
+    bgo: '',
   });
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -86,6 +87,10 @@ function AdminPage() {
         <div className="form-group">
           <label htmlFor="numero">Número</label>
           <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="bgo">BGO (Ex: 232/2025)</label>
+          <input type="text" id="bgo" name="bgo" value={formData.bgo} onChange={handleChange} />
         </div>
         <div className="form-group">
           <label htmlFor="tipo">Tipo</label>

@@ -22,8 +22,9 @@ public interface PublicacaoRepository extends JpaRepository<Publicacao, Long> {
     @Modifying
     @Transactional
     @Query(
-            value = "INSERT INTO publicacao (titulo, numero, tipo, data_publicacao, conteudo_html, status) " +
-                    "VALUES (:titulo, :numero, :tipo, :dataPublicacao, :conteudoHtml, 'ATIVA')",
+            // VVV--- ATUALIZE A CONSULTA AQUI ---VVV
+            value = "INSERT INTO publicacao (titulo, numero, tipo, data_publicacao, conteudo_html, status, bgo) " +
+                    "VALUES (:titulo, :numero, :tipo, :dataPublicacao, :conteudoHtml, 'ATIVA', :bgo)",
             nativeQuery = true
     )
     void criarNovaPublicacao(
@@ -31,6 +32,7 @@ public interface PublicacaoRepository extends JpaRepository<Publicacao, Long> {
             @Param("numero") String numero,
             @Param("tipo") String tipo,
             @Param("dataPublicacao") LocalDate dataPublicacao,
-            @Param("conteudoHtml") String conteudoHtml
+            @Param("conteudoHtml") String conteudoHtml,
+            @Param("bgo") String bgo // <-- Adicione este parâmetro
     );
 }

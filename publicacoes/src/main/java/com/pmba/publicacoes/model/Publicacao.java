@@ -24,6 +24,7 @@ public class Publicacao {
     private String numero;
     private String tipo;
     private LocalDate dataPublicacao;
+    private String bgo;
 
     // VVV--- ALTERAÇÃO AQUI ---VVV
     @Enumerated(EnumType.STRING)

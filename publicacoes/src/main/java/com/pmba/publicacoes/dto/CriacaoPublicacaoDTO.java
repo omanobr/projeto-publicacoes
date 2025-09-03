@@ -9,4 +9,5 @@ public class CriacaoPublicacaoDTO {
     private String tipo;
     private LocalDate dataPublicacao;
     private String conteudoHtml;
+    private String bgo;
 }

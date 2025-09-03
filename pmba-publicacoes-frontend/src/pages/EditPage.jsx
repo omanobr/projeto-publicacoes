@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import RichTextEditor from '../components/RichTextEditor';
-import RevogacaoModal from '../components/RevogacaoModal';
-import AlteracaoModal from '../components/AlteracaoModal';
-import VinculosPanel from '../components/VinculosPanel';
+import RichTextEditor from '../components/RichTextEditor.jsx';
+import RevogacaoModal from '../components/RevogacaoModal.jsx';
+import AlteracaoModal from '../components/AlteracaoModal.jsx';
+import VinculosPanel from '../components/VinculosPanel.jsx';
 import './AdminPage.css';
 
 function EditPage() {
@@ -20,6 +20,9 @@ function EditPage() {
     
     const [textoSelecionado, setTextoSelecionado] = useState('');
     const [editorInstance, setEditorInstance] = useState(null);
+
+    // VVV--- NOVO ESTADO PARA CONTROLAR A ABA ATIVA ---VVV
+    const [activeTab, setActiveTab] = useState('editor');
 
     const fetchData = useCallback(() => {
         setLoading(true);
@@ -44,7 +47,9 @@ function EditPage() {
     }, [fetchData]);
 
     const handleDeleteVinculo = useCallback((vinculoId) => {
-        if (window.confirm('Tem a certeza que deseja excluir este vínculo? Esta ação não pode ser desfeita.')) {
+        // A confirmação foi movida para o componente VinculosPanel, 
+        // mas podemos mantê-la aqui se for um requisito.
+        // if (window.confirm('Tem a certeza que deseja excluir este vínculo? Esta ação não pode ser desfeita.')) {
             fetch(`http://localhost:8080/api/vinculos/${vinculoId}`, {
                 method: 'DELETE',
             })
@@ -53,14 +58,15 @@ function EditPage() {
                     throw new Error('Falha ao excluir o vínculo.');
                 }
                 alert('Vínculo excluído com sucesso!');
-                fetchData();
+                fetchData(); // Recarrega os dados para atualizar a lista
             })
             .catch(err => {
                 alert(err.message);
                 setErro(err.message);
             });
-        }
+        // }
     }, [fetchData]);
+
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
@@ -199,58 +205,84 @@ function EditPage() {
         <div className="admin-page">
             <Link to="/">&larr; Voltar para a lista</Link>
             <h2>Editar Publicação</h2>
-            <form onSubmit={handleSubmit} className="admin-form">
-                <div className="form-group">
-                    <label>Título (extraído do editor)</label>
-                    <input type="text" value={formData.titulo} disabled />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="numero">Número</label>
-                  <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="tipo">Tipo</label>
-                  <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
-                    <option value="OFICIO">Ofício</option>
-                    <option value="PORTARIA">Portaria</option>
-                    <option value="DESPACHO">Despacho</option>
-                    <option value="BCG">BCG</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="dataPublicacao">Data de Publicação</label>
-                  <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Conteúdo</label>
-                    <RichTextEditor
-                        content={formData.conteudoHtml}
-                        onContentChange={handleContentChange}
-                        onEditorInstance={handleEditorInstance}
-                        onRevogarClick={handleRevogarTrechoClick}
-                        onAlterarClick={handleAlterarTrechoClick}
-                    />
-                </div>
-                {erro && <p className="error-message">{erro}</p>}
-                <div className="form-actions">
-                    <button type="submit" disabled={enviando}>
-                        {enviando ? 'Salvando...' : 'Salvar Alterações'}
-                    </button>
-                    <button 
-                        type="button" 
-                        className="revoke-button" 
-                        onClick={() => setIsRevogacaoTotalModalOpen(true)}
-                    >
-                        Revogar Documento...
-                    </button>
-                </div>
-            </form>
 
-            <VinculosPanel 
-                vinculosGerados={formData.vinculosGerados}
-                vinculosRecebidos={formData.vinculosRecebidos}
-                onDeleteVinculo={handleDeleteVinculo}
-            />
+            {/* VVV--- NAVEGAÇÃO DAS ABAS ---VVV */}
+            <div className="edit-page-tabs">
+                <button
+                    className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('editor')}
+                >
+                    Publicação
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'vinculos' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('vinculos')}
+                >
+                    Gestão de Vínculos
+                </button>
+            </div>
+
+            {/* VVV--- CONTEÚDO CONDICIONAL DA ABA ---VVV */}
+            <div className="tab-content">
+                {activeTab === 'editor' && (
+                    <form onSubmit={handleSubmit} className="admin-form">
+                        <div className="form-group">
+                            <label>Título (extraído do editor)</label>
+                            <input type="text" value={formData.titulo} disabled />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="numero">Número</label>
+                          <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="tipo">Tipo</label>
+                          <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
+                            <option value="OFICIO">Ofício</option>
+                            <option value="PORTARIA">Portaria</option>
+                            <option value="DESPACHO">Despacho</option>
+                            <option value="BCG">BCG</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="dataPublicacao">Data de Publicação</label>
+                          <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label>Conteúdo</label>
+                            <RichTextEditor
+                                content={formData.conteudoHtml}
+                                onContentChange={handleContentChange}
+                                onEditorInstance={handleEditorInstance}
+                                onRevogarClick={handleRevogarTrechoClick}
+                                onAlterarClick={handleAlterarTrechoClick}
+                            />
+                        </div>
+                        {erro && <p className="error-message">{erro}</p>}
+                        <div className="form-actions">
+                            <button type="submit" disabled={enviando}>
+                                {enviando ? 'Salvando...' : 'Salvar Alterações'}
+                            </button>
+                            <button 
+                                type="button" 
+                                className="revoke-button" 
+                                onClick={() => setIsRevogacaoTotalModalOpen(true)}
+                            >
+                                Revogar Documento...
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {activeTab === 'vinculos' && (
+                     <VinculosPanel 
+                        vinculosGerados={formData.vinculosGerados}
+                        vinculosRecebidos={formData.vinculosRecebidos}
+                        onDeleteVinculo={handleDeleteVinculo}
+                    />
+                )}
+            </div>
+            
+            {/* Os modais permanecem fora da lógica das abas */}
             <RevogacaoModal
                 isOpen={isRevogacaoModalOpen}
                 onClose={() => setIsRevogacaoModalOpen(false)}
@@ -272,4 +304,3 @@ function EditPage() {
 }
 
 export default EditPage;
-

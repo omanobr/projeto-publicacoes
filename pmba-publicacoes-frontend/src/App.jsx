@@ -1,13 +1,13 @@
 import { Outlet } from 'react-router-dom';
-import './App.css'; // <--- Verifique se esta linha existe
+import Header from './components/Header'; // <-- Importe o novo componente
+import './App.css';
 
 function App() {
   return (
-    // VVV--- A CLASSE PRECISA SER EXATAMENTE ESTA ---VVV
-    <div className="app-container"> 
-      <header>
-        <h1>Portal de Publicações da PMBA</h1>
-      </header>
+    <div className="app-container">
+      {/* Substitua o <header> antigo pelo novo componente */}
+      <Header /> 
+      
       <main>
         <Outlet />
       </main>

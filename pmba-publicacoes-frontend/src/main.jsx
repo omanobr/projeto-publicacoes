@@ -7,7 +7,8 @@ import HomePage from './pages/HomePage.jsx';
 import PublicacaoPage from './pages/PublicacaoPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import EditPage from './pages/EditPage.jsx';
-
+import BuscaAvancadaPage from './pages/BuscaAvancadaPage.jsx';
+import { AuthProvider } from './context/AuthContext';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       { // <-- 2. ADICIONE ESTA NOVA ROTA DINÂMICA
         path: "/admin/editar/:id",
         element: <EditPage />,
+      },
+      { // <-- ADICIONE ESTA NOVA ROTA
+        path: "/busca-avancada",
+        element: <BuscaAvancadaPage />,
       }
     ],
   },
@@ -37,6 +42,10 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    {/* VVV--- Envolva o RouterProvider com o AuthProvider ---VVV */}
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+    {/* ^^^----------------------------------------------------^^^ */}
   </React.StrictMode>,
 );

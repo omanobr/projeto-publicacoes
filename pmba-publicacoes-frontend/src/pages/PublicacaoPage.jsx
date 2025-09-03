@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './PublicacaoPage.css';
 
 function PublicacaoPage() {
@@ -8,6 +9,7 @@ function PublicacaoPage() {
   const [publicacao, setPublicacao] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     // Buscamos os dados da publicação específica usando o ID da URL.
@@ -36,11 +38,13 @@ function PublicacaoPage() {
       <Link to="/">&larr; Voltar para a lista</Link>
 
       {/* VVV--- ADICIONE ESTE NOVO BLOCO ---VVV */}
-      <div className="admin-actions">
-        <Link to={`/admin/editar/${id}`} className="edit-button">
-          Editar Publicação
-        </Link>
-      </div>
+      {isAdmin && (
+        <div className="admin-actions">
+          <Link to={`/admin/editar/${id}`} className="edit-button">
+            Editar Publicação
+          </Link>
+        </div>
+      )}
       {/* ^^^--- FIM DO NOVO BLOCO ---^^^ */}
       <h2>
             {publicacao.titulo}

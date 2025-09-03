@@ -20,11 +20,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 
 import java.io.IOException;
@@ -128,13 +131,6 @@ public class PublicacaoService {
 
     @Transactional(readOnly = true)
     public List<PublicacaoListDTO> findAllAsListDto() {
-        // ANTES:
-        // List<Publicacao> publicacoes = publicacaoRepository.findAll();
-        // return publicacoes.stream()
-        //         .map(this::convertToListDto)
-        //         .collect(Collectors.toList());
-
-        // DEPOIS (mais simples, rápido e corrige o bug):
         return publicacaoRepository.findAllForListView();
     }
 
@@ -146,43 +142,76 @@ public class PublicacaoService {
             return conteudoProcessado;
         }
 
-        for (VinculoNormativo vinculo : vinculosRecebidos) {
+        for (var vinculo : vinculosRecebidos) {
             String textoOriginal = vinculo.getTextoDoTrecho();
-            if (textoOriginal == null || textoOriginal.trim().isEmpty()) {
-                continue;
-            }
-
+            if (textoOriginal == null || textoOriginal.isEmpty()) continue;
             String textoSubstituto;
-            String tooltipText;
 
             if (vinculo.getTipoVinculo() == TipoVinculo.ALTERA && vinculo.getTextoNovo() != null && !apenasTachado) {
-                tooltipText = String.format("Redação alterada pela Publicação %s", vinculo.getPublicacaoOrigem().getNumero());
+
+                String textoNovoInline = vinculo.getTextoNovo()
+                        .trim()
+                        .replaceAll("</p>\\s*<p>", "<br>")
+                        .replaceAll("^<p>", "")
+                        .replaceAll("</p>$", "");
                 textoSubstituto = String.format(
-                        "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"%s\">" +
-                                "<del>%s</del> <br> <ins>%s</ins>",
+                        "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"Redação alterada pela Publicação %s\">" +
+                                "<del>%s</del><br><span class=\"novo-texto\"> %s</span>" +
+                                "</a>",
                         vinculo.getPublicacaoOrigem().getId(),
-                        tooltipText,
+                        vinculo.getPublicacaoOrigem().getNumero(),
                         textoOriginal,
-                        vinculo.getTextoNovo()
+                        textoNovoInline
                 );
             } else {
                 if (apenasTachado) {
                     textoSubstituto = String.format("<del>%s</del>", textoOriginal);
                 } else {
-                    tooltipText = String.format("Trecho revogado pela Publicação %s", vinculo.getPublicacaoOrigem().getNumero());
                     textoSubstituto = String.format(
-                            "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"%s\">" +
+                            "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Trecho revogado pela Publicação %s\">" +
                                     "<del>%s</del>" +
                                     "</a>",
                             vinculo.getPublicacaoOrigem().getId(),
-                            tooltipText,
+                            vinculo.getPublicacaoOrigem().getNumero(),
                             textoOriginal
                     );
                 }
             }
-            conteudoProcessado = conteudoProcessado.replace(textoOriginal, textoSubstituto);
+
+            conteudoProcessado = conteudoProcessado.replaceFirst(Pattern.quote(textoOriginal), Matcher.quoteReplacement(textoSubstituto));
         }
         return conteudoProcessado;
+    }
+
+    // VVV--- MÉTODO DE BUSCA ATUALIZADO ---VVV
+    @Transactional(readOnly = true)
+    public List<PublicacaoListDTO> searchPublicacoes(String termo) {
+        List<Publicacao> publicacoes;
+
+        try {
+            // Tenta converter o termo para uma data. O frontend já envia no formato AAAA-MM-DD.
+            LocalDate data = LocalDate.parse(termo);
+            // Se a conversão for bem-sucedida, busca por data usando o método do repositório.
+            publicacoes = publicacaoRepository.findByDataPublicacao(data);
+        } catch (DateTimeParseException e) {
+            // Se a conversão falhar, significa que não é uma data, então busca por texto.
+            publicacoes = publicacaoRepository.findByTermo(termo);
+        }
+
+        // Converte a lista de entidades (Publicacao) para a lista de DTOs (PublicacaoListDTO).
+        return publicacoes.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+    }
+    // ^^^--- FIM DA ATUALIZAÇÃO ---^^^
+
+
+    @Transactional(readOnly = true)
+    public List<PublicacaoListDTO> searchPublicacoesAvancado(String conteudo) {
+        List<Publicacao> publicacoes = publicacaoRepository.searchByConteudo(conteudo);
+        return publicacoes.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
     }
 
     private VinculoSimpleDTO convertVinculoToSimpleDto(VinculoNormativo vinculo) {
@@ -226,13 +255,11 @@ public class PublicacaoService {
         String textoSimples;
 
         if (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf")) {
-            // Lógica para usar PDFBox e extrair texto do PDF
             PDDocument document = PDDocument.load(file.getInputStream());
             PDFTextStripper stripper = new PDFTextStripper();
             textoSimples = stripper.getText(document);
             document.close();
         } else if (originalFilename != null && (originalFilename.toLowerCase().endsWith(".docx"))) {
-            // Lógica para usar Apache POI e extrair texto do DOCX
             XWPFDocument document = new XWPFDocument(file.getInputStream());
             XWPFWordExtractor extractor = new XWPFWordExtractor(document);
             textoSimples = extractor.getText();
@@ -241,7 +268,6 @@ public class PublicacaoService {
             throw new IllegalArgumentException("Formato de arquivo não suportado.");
         }
 
-        // Converter o texto simples em HTML básico para o RichTextEditor
         return converterTextoParaHtml(textoSimples);
     }
 
@@ -252,7 +278,6 @@ public class PublicacaoService {
 
         String[] lines = textoSimples.split("\\r?\\n");
 
-        // --- FASE 1: Montar os parágrafos "brutos" usando a lógica heurística ---
         List<String> rawParagraphs = new ArrayList<>();
         StringBuilder paragraphBuilder = new StringBuilder();
 
@@ -284,28 +309,22 @@ public class PublicacaoService {
             rawParagraphs.add(paragraphBuilder.toString().trim());
         }
 
-        // --- FASE 2: Limpar a lista de parágrafos montados ---
         StringBuilder htmlResult = new StringBuilder();
 
-        // Regra A: Padrão para identificar um parágrafo que é um cabeçalho completo a ser EXCLUÍDO.
         Pattern headerExclusionPattern = Pattern.compile(
                 "\\d{1,2} de (Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro) de \\d{4}\\s+BGO\\s+Nº.*LEGISLAÇÃO",
                 Pattern.CASE_INSENSITIVE
         );
 
-        // Regra B: Padrão para encontrar e REMOVER apenas a parte da paginação de qualquer parágrafo.
         Pattern pageRemovalPattern = Pattern.compile("\\s*(Pág|Pagina|Pag)\\.?\\s*\\d{1,4}\\s*", Pattern.CASE_INSENSITIVE);
 
         for (String paragraph : rawParagraphs) {
-            // Aplica a Regra A: Verifica se o parágrafo inteiro deve ser excluído.
             if (headerExclusionPattern.matcher(paragraph).find()) {
-                continue; // Se for um cabeçalho, pula para o próximo parágrafo.
+                continue;
             }
 
-            // Se sobreviveu à Regra A, aplica a Regra B: remove apenas a paginação.
             String cleanedParagraph = pageRemovalPattern.matcher(paragraph).replaceAll("").trim();
 
-            // Adiciona o parágrafo ao resultado final apenas se ele não ficou vazio após a limpeza.
             if (!cleanedParagraph.isEmpty()) {
                 htmlResult.append("<p>").append(cleanedParagraph).append("</p>");
             }

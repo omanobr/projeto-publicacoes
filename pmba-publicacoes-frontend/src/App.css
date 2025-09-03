@@ -1,94 +1,67 @@
-/*
-  =============================================================
-  A NOVA ABORDAGEM DE CENTRALIZAÇÃO
-  =============================================================
-*/
+/* ============================================================= */
+/* LAYOUT E ESTILOS GERAIS                                       */
+/* ============================================================= */
 body {
-  display: flex;
-  flex-direction: column;
-  align-items: center; 
-  min-height: 100vh;
-  margin: 0;
   background-color: #f0f2f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #333;
 }
 
-
-/*
-  Agora, o .app-container não precisa mais se centralizar.
-  Ele só precisa definir sua largura.
-*/
 .app-container {
-  width: 100%;      /* Ocupa 100% do espaço que o 'body' permite */
-  max-width: 960px; /* Mas nunca ultrapassa 960px */
-  margin-top: 2rem; /* Apenas uma margem no topo */
-  margin-bottom: 2rem; /* E na base */
-  padding: 1rem;
+  max-width: 1600px;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-/* O resto do CSS continua o mesmo para estilização */
+/* ... (outros estilos gerais como lista-publicacoes, publicacao-detalhe, etc.) ... */
+.lista-publicacoes ul { list-style: none; padding: 0; }
+.lista-publicacoes li { background-color: #ffffff; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); transition: transform 0.2s ease-in-out; }
+.lista-publicacoes li:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+.lista-publicacoes a { text-decoration: none; color: #0056b3; font-weight: 500; }
+.lista-publicacoes a:hover { text-decoration: underline; }
+.publicacao-detalhe { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.publicacao-detalhe a { display: inline-block; margin-bottom: 1rem; color: #2b80db; text-decoration: none; }
+.conteudo-publicacao { line-height: 1.6; }
+.status-tag { margin-left: 1rem; padding: 0.2rem 0.6rem; font-size: 0.8em; font-weight: bold; border-radius: 10px; color: white; }
+.status-tag.revogado { background-color: #dc3545; }
+.revogado-item { opacity: 0.6; background-color: #f8f9fa; }
+.disclaimer-text { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; text-align: center; font-style: italic; color: #dc3545; }
 
-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #0056b3;
+
+/* ================================================================= */
+/* ESTILO FINAL E CORRIGIDO PARA O BLOCO DE ALTERAÇÃO                */
+/* ================================================================= */
+
+/* Contêiner principal para o bloco da alteração */
+.trecho-alterado {
+   /* Garante que o bloco ocupe sua própria linha */
+    /* Adiciona espaço vertical antes e depois */
+   /* Adiciona um recuo à esquerda */
+   /* Barra lateral sutil para indicar o bloco */
+  position: relative; /* Necessário para o tooltip */
+  cursor: help;
 }
 
-.lista-publicacoes ul {
-  list-style: none;
-  padding: 0;
+/* Estilo aplicado APENAS ao texto antigo (DELETADO) */
+.trecho-alterado del {
+  color: #dc3545; /* Vermelho */
+  text-decoration: line-through; /* APLICA O RISCADO AQUI */
+  background-color: transparent; /* Sem fundo de caixa */
 }
 
-.lista-publicacoes li {
-  background-color: #ffffff;
-  margin-bottom: 1rem;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease-in-out;
-}
-
-.lista-publicacoes li:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.lista-publicacoes a {
-  text-decoration: none;
-  color: #0056b3;
+/* Estilo aplicado APENAS ao texto novo (INSERIDO) */
+.trecho-alterado ins {
+  color: #02f03a; /* Verde */
+  text-decoration: none; /* GARANTE QUE NÃO HAJA RISCADO OU SUBLINHADO */
+  background-color: transparent; /* Sem fundo de caixa */
   font-weight: 500;
 }
 
-.lista-publicacoes a:hover {
-  text-decoration: underline;
-}
-
-.publicacao-detalhe {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.publicacao-detalhe a {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: #0056b3;
-  text-decoration: none;
-}
-
-.conteudo-publicacao {
-  line-height: 1.6;
-}
-
-.trecho-alterado {
-  position: relative;
-  cursor: help;
-  background-color: #fff8e1;
-}
-
-.trecho-alterado:hover::after {
+/* Tooltip que aparece no hover */
+.trecho-alterado::after {
   content: attr(data-vinculo-info);
   position: absolute;
   bottom: 100%;
@@ -98,205 +71,33 @@ header {
   background-color: #333;
   color: #fff;
   padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 0.9em;
-  text-align: center;
-  white-space: nowrap;
-  z-index: 10;
-}
-
-.ql-toolbar .ql-revogarTrecho::before {
-  content: "Vincular 🔗"; /* O texto que aparecerá no botão */
-  font-weight: bold;
-  font-size: 12px;
-}
-.status-tag {
-  margin-left: 1rem;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.8em;
-  font-weight: bold;
-  border-radius: 10px;
-  color: white;
-}
-.status-tag.revogado {
-  background-color: #dc3545; /* Vermelho */
-}
-.revogado-item {
-  opacity: 0.6;
-  background-color: #f8f9fa;
-}
-.form-actions {
-  display: flex;
-  gap: 1rem;
-}
-.revoke-button {
-  background-color: #dc3545;
-  color: white;
-}
-
-/* ================================================================= */
-/* NOVO ESTILO PARA OS LINKS DE VÍNCULO                              */
-/* ================================================================= */
-.link-vinculo {
-  color: inherit; /* Herda a cor do texto normal (preto) */
-  text-decoration: none; /* Remove o sublinhado padrão */
-  cursor: pointer;
-}
-
-
-/* Adicione este CSS ao seu ficheiro App.css */
-
-.trecho-alterado del {
-  text-decoration: line-through;
-  color: #dc3545; /* Vermelho */
-  background-color: #fbe9eb;
-}
-/* ... (seu CSS existente) ... */
-
-/* ================================================================= */
-/* ESTILOS PARA O PAINEL DE VÍNCULOS                                 */
-/* ================================================================= */
-.vinculos-panel {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-}
-
-.vinculos-panel h3 {
-  margin-top: 0;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 0.5rem;
-}
-
-.vinculos-panel h4 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #495057;
-}
-
-.vinculos-list {
-  list-style: none;
-  padding: 0;
-}
-
-.vinculos-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-}
-
-.vinculo-info a {
-  font-weight: 500;
-  color: #0056b3;
-  text-decoration: none;
-}
-
-.vinculo-info a:hover {
-  text-decoration: underline;
-}
-
-.vinculo-info span {
-  display: block;
-  font-size: 0.9em;
-  color: #6c757d;
-  margin-top: 0.25rem;
-}
-
-.delete-vinculo-btn {
-  background-color: #fbe0e2;
-  color: #dc3545;
-  border: 1px solid #dc3545;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.delete-vinculo-btn:hover {
-  background-color: #dc3545;
-  color: white;
-}
-
-.no-vinculos {
-  color: #6c757d;
-  font-style: italic;
-  padding: 1rem;
-  background-color: #e9ecef;
-  text-align: center;
-  border-radius: 4px;
-}
-
-/* ================================================================= */
-/* ESTILOS APRIMORADOS PARA VÍNCULOS DE TEXTO                        */
-/* ================================================================= */
-
-/* Contêiner principal para o trecho alterado/revogado */
-.trecho-alterado {
-  position: relative; /* Essencial para o posicionamento do tooltip */
-  cursor: pointer;
-  text-decoration: none; /* Remove o sublinhado padrão do link */
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-/* Tooltip que aparece no hover */
-.trecho-alterado::after {
-  content: attr(data-vinculo-info); /* Pega o texto do nosso atributo de dados */
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px); /* Começa um pouco para baixo */
-  
-  background-color: #333;
-  color: #fff;
-  padding: 8px 12px;
   border-radius: 6px;
   font-size: 0.9em;
   white-space: nowrap;
   z-index: 10;
-  
-  /* Efeito de transição */
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/* Mostra o tooltip ao passar o mouse */
 .trecho-alterado:hover::after {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0); /* Move para a posição final */
 }
 
-/* Estilo para o texto original (removido) */
-.trecho-alterado del {
-  text-decoration: line-through;
-  color: #c0392b; /* Vermelho mais escuro */
-  background-color: #f2dede; /* Fundo rosa claro */
-}
-
-/* Estilo para o novo texto (adicionado) */
-.trecho-alterado ins {
-  text-decoration: none;
-  color: #27ae60; /* Verde mais escuro */
-  background-color: #dff0d8; /* Fundo verde claro */
-  font-weight: 500;
-}
-/* Estilo para o texto de aviso do BGO */
-.disclaimer-text {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-  text-align: center;
-  font-style: italic;
-  color: #dc3545; /* Vermelho */
-}
+/* ================================================================= */
+/* ESTILOS PARA O PAINEL DE VÍNCULOS                                 */
+/* ================================================================= */
+/* ... (cole aqui as regras de .vinculos-panel, .vinculos-list, etc. do seu App.css original) ... */
+.vinculos-panel { margin-top: 2rem; padding: 1.5rem; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+.vinculos-panel h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
+.vinculos-panel h4 { margin-top: 1.5rem; margin-bottom: 0.5rem; color: #495057; }
+.vinculos-list { list-style: none; padding: 0; }
+.vinculos-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: #fff; border: 1px solid #eee; border-radius: 4px; margin-bottom: 0.5rem; }
+.vinculo-info a { font-weight: 500; color: #0056b3; text-decoration: none; }
+.vinculo-info a:hover { text-decoration: underline; }
+.vinculo-info span { display: block; font-size: 0.9em; color: #6c757d; margin-top: 0.25rem; }
+.delete-vinculo-btn { background-color: #fbe0e2; color: #dc3545; border: 1px solid #dc3545; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s, color 0.2s; }
+.delete-vinculo-btn:hover { background-color: #dc3545; color: white; }
+.no-vinculos { color: #6c757d; font-style: italic; padding: 1rem; background-color: #e9ecef; text-align: center; border-radius: 4px; }

@@ -1,0 +1,72 @@
+[
+    {
+        "numero": "101/2025",
+        "tipo": "PORTARIA",
+        "dataPublicacao": "2025-01-15",
+        "bgo": "010/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Portaria de Teste 1</span></p><p>Conteúdo de teste para a primeira publicação em lote.</p>"
+    },
+    {
+        "numero": "102/2025",
+        "tipo": "OFICIO",
+        "dataPublicacao": "2025-02-20",
+        "bgo": "025/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Ofício de Exemplo 2</span></p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>"
+    },
+    {
+        "numero": "103/2025",
+        "tipo": "DESPACHO",
+        "dataPublicacao": "2025-03-10",
+        "bgo": "040/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Despacho Urgente 3</span></p><p>Teste de despacho para o sistema de publicações.</p>"
+    },
+    {
+        "numero": "104/2025",
+        "tipo": "BCG",
+        "dataPublicacao": "2025-04-05",
+        "bgo": "055/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">BCG Informativo 4</span></p><p>Este é um Boletim Geral de Comando para fins de teste.</p>"
+    },
+    {
+        "numero": "105/2025",
+        "tipo": "PORTARIA",
+        "dataPublicacao": "2025-05-12",
+        "bgo": "070/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Portaria de Nomeação 5</span></p><p>Conteúdo sobre nomeação de novos oficiais.</p>"
+    },
+    {
+        "numero": "106/2025",
+        "tipo": "OFICIO",
+        "dataPublicacao": "2025-06-18",
+        "bgo": "085/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Ofício Circular 6</span></p><p>Comunicação interna para todas as unidades.</p>"
+    },
+    {
+        "numero": "107/2025",
+        "tipo": "PORTARIA",
+        "dataPublicacao": "2025-07-22",
+        "bgo": "100/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Portaria de Férias 7</span></p><p>Regulamentação do período de férias do segundo semestre.</p>"
+    },
+    {
+        "numero": "108/2025",
+        "tipo": "DESPACHO",
+        "dataPublicacao": "2025-08-01",
+        "bgo": "115/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Despacho Administrativo 8</span></p><p>Assuntos administrativos e de rotina.</p>"
+    },
+    {
+        "numero": "109/2025",
+        "tipo": "BCG",
+        "dataPublicacao": "2025-09-03",
+        "bgo": "130/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">BCG de Promoções 9</span></p><p>Lista de praças e oficiais promovidos.</p>"
+    },
+    {
+        "numero": "110/2025",
+        "tipo": "PORTARIA",
+        "dataPublicacao": "2025-10-10",
+        "bgo": "145/2025",
+        "conteudoHtml": "<p><span data-meta=\"titulo\">Portaria de Exoneração 10</span></p><p>Último item de teste para o lote de publicações.</p>"
+    }
+]

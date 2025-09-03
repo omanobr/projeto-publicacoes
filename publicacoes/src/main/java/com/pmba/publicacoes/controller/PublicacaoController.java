@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -27,11 +28,6 @@ public class PublicacaoController {
     public ResponseEntity<Void> criarPublicacao(@RequestBody CriacaoPublicacaoDTO publicacaoDTO) {
         publicacaoService.criarComMetadadosExtraidos(publicacaoDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @GetMapping
-    public List<PublicacaoListDTO> listarPublicacoes() {
-        return publicacaoService.findAllAsListDto();
     }
 
     // Endpoint para a PÁGINA DE VISUALIZAÇÃO
@@ -61,5 +57,22 @@ public class PublicacaoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar o arquivo.");
         }
     }
+    // VVV--- ATUALIZE O MÉTODO @GetMapping ---VVV
+    @GetMapping
+    public List<PublicacaoListDTO> listarPublicacoes(@RequestParam(required = false) String termo) {
+        if (termo != null && !termo.isEmpty()) {
+            return publicacaoService.searchPublicacoes(termo);
+        }
+        return publicacaoService.findAllAsListDto();
+    }
+    // ^^^--- FIM DA ATUALIZAÇÃO ---^^^
+
+
+    // VVV--- ADICIONE O NOVO ENDPOINT DE BUSCA AVANÇADA ---VVV
+    @GetMapping("/busca-avancada")
+    public List<PublicacaoListDTO> buscarPublicacaoPorConteudo(@RequestParam String conteudo) {
+        return publicacaoService.searchPublicacoesAvancado(conteudo);
+    }
+    // ^^^--- FIM DO NOVO ENDPOINT ---^^^
 }
 

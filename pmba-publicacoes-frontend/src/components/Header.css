@@ -1,0 +1,48 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 2rem;
+}
+
+.app-header .logo a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.app-header .main-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.app-header .main-nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  padding-bottom: 5px;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.app-header .main-nav a:hover {
+  border-color: #0056b3;
+}
+
+/* O NavLink adiciona a classe 'active' ao link da página atual */
+.app-header .main-nav a.active {
+  color: #0056b3;
+  border-color: #0056b3;
+}
+
+.app-header .admin-nav button {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}

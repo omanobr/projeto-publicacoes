@@ -21,11 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -94,11 +92,31 @@ public class PublicacaoService {
     public PublicacaoDetailDTO findByIdProcessado(Long id) {
         Publicacao publicacao = publicacaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Publicação não encontrada com id: " + id));
+
+        Hibernate.initialize(publicacao.getVinculosGerados());
         PublicacaoDetailDTO dto = convertToDetailDto(publicacao);
+
         String conteudoProcessado = processarVinculos(publicacao, false);
         dto.setConteudoHtml(conteudoProcessado);
+
+        List<VinculoNormativo> vinculosRecebidos = vinculoRepository.findAllByPublicacaoDestinoId(id);
+
+        Set<VinculoPublicacaoInfoDTO> publicacoesVinculadas = new HashSet<>();
+
+        for (VinculoNormativo vinculo : publicacao.getVinculosGerados()) {
+            Publicacao pDestino = vinculo.getPublicacaoDestino();
+            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(pDestino.getId(), pDestino.getTitulo()));
+        }
+        for (VinculoNormativo vinculo : vinculosRecebidos) {
+            Publicacao pOrigem = vinculo.getPublicacaoOrigem();
+            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(pOrigem.getId(), pOrigem.getTitulo()));
+        }
+
+        dto.setPublicacoesVinculadas(new ArrayList<>(publicacoesVinculadas));
+
         return dto;
     }
+
 
     @Transactional(readOnly = true)
     public PublicacaoEditDTO findByIdForEditing(Long id) {
@@ -154,6 +172,7 @@ public class PublicacaoService {
                         .replaceAll("</p>\\s*<p>", "<br>")
                         .replaceAll("^<p>", "")
                         .replaceAll("</p>$", "");
+
                 textoSubstituto = String.format(
                         "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"Redação alterada pela Publicação %s\">" +
                                 "<del>%s</del><br><span class=\"novo-texto\"> %s</span>" +
@@ -183,28 +202,30 @@ public class PublicacaoService {
         return conteudoProcessado;
     }
 
-    // VVV--- MÉTODO DE BUSCA ATUALIZADO ---VVV
     @Transactional(readOnly = true)
     public List<PublicacaoListDTO> searchPublicacoes(String termo) {
-        List<Publicacao> publicacoes;
+        LocalDate data = null;
+        String termoDeBusca = termo;
 
         try {
-            // Tenta converter o termo para uma data. O frontend já envia no formato AAAA-MM-DD.
-            LocalDate data = LocalDate.parse(termo);
-            // Se a conversão for bem-sucedida, busca por data usando o método do repositório.
-            publicacoes = publicacaoRepository.findByDataPublicacao(data);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            data = LocalDate.parse(termoDeBusca, formatter);
+            termoDeBusca = null;
         } catch (DateTimeParseException e) {
-            // Se a conversão falhar, significa que não é uma data, então busca por texto.
-            publicacoes = publicacaoRepository.findByTermo(termo);
+            // Não é uma data, a busca continuará por texto.
         }
 
-        // Converte a lista de entidades (Publicacao) para a lista de DTOs (PublicacaoListDTO).
+        List<Publicacao> publicacoes;
+        if (data != null) {
+            publicacoes = publicacaoRepository.findByDataPublicacaoOrderByDataPublicacaoDesc(data);
+        } else {
+            publicacoes = publicacaoRepository.findByTituloContainingIgnoreCaseOrNumeroContainingIgnoreCaseOrderByDataPublicacaoDesc(termoDeBusca, termoDeBusca);
+        }
+
         return publicacoes.stream()
                 .map(this::convertToListDto)
                 .collect(Collectors.toList());
     }
-    // ^^^--- FIM DA ATUALIZAÇÃO ---^^^
-
 
     @Transactional(readOnly = true)
     public List<PublicacaoListDTO> searchPublicacoesAvancado(String conteudo) {

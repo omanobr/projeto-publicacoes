@@ -13,25 +13,19 @@ import java.util.List;
 
 public interface PublicacaoRepository extends JpaRepository<Publicacao, Long> {
 
-    @Query("SELECT new com.pmba.publicacoes.dto.PublicacaoListDTO(p.id, p.titulo, p.numero, p.tipo, p.dataPublicacao, p.status) FROM Publicacao p")
+    @Query("SELECT new com.pmba.publicacoes.dto.PublicacaoListDTO(p.id, p.titulo, p.numero, p.tipo, p.dataPublicacao, p.status) FROM Publicacao p ORDER BY p.dataPublicacao DESC")
     List<PublicacaoListDTO> findAllForListView();
 
-    // VVV--- MÉTODO ATUALIZADO ---VVV
-    // O método agora usa a convenção do Spring Data JPA e espera um objeto LocalDate,
-    // o que é mais seguro e menos propenso a erros de conversão de tipo.
-    List<Publicacao> findByDataPublicacao(LocalDate data);
-    // ^^^--- FIM DA ATUALIZAÇÃO ---^^^
+    // VVV--- MÉTODOS DE BUSCA ATUALIZADOS COM ORDENAÇÃO ---VVV
+    List<Publicacao> findByTituloContainingIgnoreCaseOrNumeroContainingIgnoreCaseOrderByDataPublicacaoDesc(String titulo, String numero);
+
+    List<Publicacao> findByDataPublicacaoOrderByDataPublicacaoDesc(LocalDate data);
 
     @Query(value = "SELECT * FROM publicacao p WHERE " +
-            "LOWER(unaccent(p.titulo)) LIKE LOWER(unaccent(CONCAT('%', :termo, '%'))) OR " +
-            "LOWER(unaccent(p.numero)) LIKE LOWER(unaccent(CONCAT('%', :termo, '%')))",
-            nativeQuery = true)
-    List<Publicacao> findByTermo(@Param("termo") String termo);
-
-    @Query(value = "SELECT * FROM publicacao p WHERE " +
-            "LOWER(unaccent(p.conteudo_html)) LIKE LOWER(unaccent(CONCAT('%', :conteudo, '%')))",
+            "LOWER(unaccent(p.conteudo_html)) LIKE LOWER(unaccent(CONCAT('%', :conteudo, '%'))) ORDER BY p.data_publicacao DESC",
             nativeQuery = true)
     List<Publicacao> searchByConteudo(@Param("conteudo") String conteudo);
+    // ^^^--- FIM DAS ALTERAÇÕES ---^^^
 
 
     @Modifying

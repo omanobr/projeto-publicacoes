@@ -14,15 +14,14 @@ function EditPage() {
     const [erro, setErro] = useState(null);
     const [enviando, setEnviando] = useState(false);
     
+    const [activeTab, setActiveTab] = useState('publicacao'); // 'publicacao' ou 'vinculos'
+    
     const [isRevogacaoModalOpen, setIsRevogacaoModalOpen] = useState(false);
     const [isAlteracaoModalOpen, setIsAlteracaoModalOpen] = useState(false);
     const [isRevogacaoTotalModalOpen, setIsRevogacaoTotalModalOpen] = useState(false);
     
     const [textoSelecionado, setTextoSelecionado] = useState('');
     const [editorInstance, setEditorInstance] = useState(null);
-
-    // VVV--- NOVO ESTADO PARA CONTROLAR A ABA ATIVA ---VVV
-    const [activeTab, setActiveTab] = useState('editor');
 
     const fetchData = useCallback(() => {
         setLoading(true);
@@ -47,9 +46,7 @@ function EditPage() {
     }, [fetchData]);
 
     const handleDeleteVinculo = useCallback((vinculoId) => {
-        // A confirmação foi movida para o componente VinculosPanel, 
-        // mas podemos mantê-la aqui se for um requisito.
-        // if (window.confirm('Tem a certeza que deseja excluir este vínculo? Esta ação não pode ser desfeita.')) {
+        if (window.confirm('Tem a certeza que deseja excluir este vínculo? Esta ação não pode ser desfeita.')) {
             fetch(`http://localhost:8080/api/vinculos/${vinculoId}`, {
                 method: 'DELETE',
             })
@@ -58,15 +55,14 @@ function EditPage() {
                     throw new Error('Falha ao excluir o vínculo.');
                 }
                 alert('Vínculo excluído com sucesso!');
-                fetchData(); // Recarrega os dados para atualizar a lista
+                fetchData();
             })
             .catch(err => {
                 alert(err.message);
                 setErro(err.message);
             });
-        // }
+        }
     }, [fetchData]);
-
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
@@ -74,6 +70,7 @@ function EditPage() {
     }, []);
 
     const handleContentChange = useCallback((newContent) => {
+        if (!formData) return;
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newContent;
         const titleElement = tempDiv.querySelector('span[data-meta="titulo"]');
@@ -82,7 +79,7 @@ function EditPage() {
             conteudoHtml: newContent,
             titulo: titleElement ? titleElement.textContent : 'Título não definido',
         }));
-    }, []);
+    }, [formData]);
 
     const handleSubmit = useCallback((event) => {
         event.preventDefault();
@@ -200,17 +197,17 @@ function EditPage() {
 
     if (loading) return <p>Carregando...</p>;
     if (erro) return <p>Erro: {erro}</p>;
+    if (!formData) return <p>Nenhum dado encontrado para esta publicação.</p>;
 
     return (
         <div className="admin-page">
             <Link to="/">&larr; Voltar para a lista</Link>
             <h2>Editar Publicação</h2>
 
-            {/* VVV--- NAVEGAÇÃO DAS ABAS ---VVV */}
             <div className="edit-page-tabs">
                 <button
-                    className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('editor')}
+                    className={`tab-button ${activeTab === 'publicacao' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('publicacao')}
                 >
                     Publicação
                 </button>
@@ -222,67 +219,69 @@ function EditPage() {
                 </button>
             </div>
 
-            {/* VVV--- CONTEÚDO CONDICIONAL DA ABA ---VVV */}
-            <div className="tab-content">
-                {activeTab === 'editor' && (
-                    <form onSubmit={handleSubmit} className="admin-form">
-                        <div className="form-group">
-                            <label>Título (extraído do editor)</label>
-                            <input type="text" value={formData.titulo} disabled />
-                        </div>
-                        <div className="form-group">
-                          <label htmlFor="numero">Número</label>
-                          <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
-                        </div>
-                        <div className="form-group">
-                          <label htmlFor="tipo">Tipo</label>
-                          <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
-                            <option value="OFICIO">Ofício</option>
-                            <option value="PORTARIA">Portaria</option>
-                            <option value="DESPACHO">Despacho</option>
-                            <option value="BCG">BCG</option>
-                          </select>
-                        </div>
-                        <div className="form-group">
-                          <label htmlFor="dataPublicacao">Data de Publicação</label>
-                          <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
-                        </div>
-                        <div className="form-group">
-                            <label>Conteúdo</label>
-                            <RichTextEditor
-                                content={formData.conteudoHtml}
-                                onContentChange={handleContentChange}
-                                onEditorInstance={handleEditorInstance}
-                                onRevogarClick={handleRevogarTrechoClick}
-                                onAlterarClick={handleAlterarTrechoClick}
-                            />
-                        </div>
-                        {erro && <p className="error-message">{erro}</p>}
-                        <div className="form-actions">
-                            <button type="submit" disabled={enviando}>
-                                {enviando ? 'Salvando...' : 'Salvar Alterações'}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="revoke-button" 
-                                onClick={() => setIsRevogacaoTotalModalOpen(true)}
-                            >
-                                Revogar Documento...
-                            </button>
-                        </div>
-                    </form>
-                )}
+            {activeTab === 'publicacao' && (
+                <form onSubmit={handleSubmit} className="admin-form">
+                    <div className="form-group">
+                        <label>Título (extraído do editor)</label>
+                        <input type="text" value={formData.titulo} disabled />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="numero">Número</label>
+                      <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
+                    </div>
+                    {/* VVV--- CAMPO DO BGO ADICIONADO AQUI ---VVV */}
+                    <div className="form-group">
+                        <label htmlFor="bgo">BGO (Ex: 232/2025)</label>
+                        <input type="text" id="bgo" name="bgo" value={formData.bgo || ''} onChange={handleChange} />
+                    </div>
+                    {/* ^^^--- FIM DO CAMPO ADICIONADO ---^^^ */}
+                    <div className="form-group">
+                      <label htmlFor="tipo">Tipo</label>
+                      <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
+                        <option value="OFICIO">Ofício</option>
+                        <option value="PORTARIA">Portaria</option>
+                        <option value="DESPACHO">Despacho</option>
+                        <option value="BCG">BCG</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="dataPublicacao">Data de Publicação</label>
+                      <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label>Conteúdo</label>
+                        <RichTextEditor
+                            content={formData.conteudoHtml}
+                            onContentChange={handleContentChange}
+                            onEditorInstance={handleEditorInstance}
+                            onRevogarClick={handleRevogarTrechoClick}
+                            onAlterarClick={handleAlterarTrechoClick}
+                        />
+                    </div>
+                    {erro && <p className="error-message">{erro}</p>}
+                    <div className="form-actions">
+                        <button type="submit" disabled={enviando}>
+                            {enviando ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
+                        <button 
+                            type="button" 
+                            className="revoke-button" 
+                            onClick={() => setIsRevogacaoTotalModalOpen(true)}
+                        >
+                            Revogar Documento...
+                        </button>
+                    </div>
+                </form>
+            )}
 
-                {activeTab === 'vinculos' && (
-                     <VinculosPanel 
-                        vinculosGerados={formData.vinculosGerados}
-                        vinculosRecebidos={formData.vinculosRecebidos}
-                        onDeleteVinculo={handleDeleteVinculo}
-                    />
-                )}
-            </div>
-            
-            {/* Os modais permanecem fora da lógica das abas */}
+            {activeTab === 'vinculos' && (
+                <VinculosPanel 
+                    vinculosGerados={formData.vinculosGerados}
+                    vinculosRecebidos={formData.vinculosRecebidos}
+                    onDeleteVinculo={handleDeleteVinculo}
+                />
+            )}
+
             <RevogacaoModal
                 isOpen={isRevogacaoModalOpen}
                 onClose={() => setIsRevogacaoModalOpen(false)}
@@ -304,3 +303,4 @@ function EditPage() {
 }
 
 export default EditPage;
+

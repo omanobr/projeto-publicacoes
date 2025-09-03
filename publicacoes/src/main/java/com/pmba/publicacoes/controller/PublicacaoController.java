@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -50,6 +51,15 @@ public class PublicacaoController {
         // O método de atualização retorna um DetailDTO, pois é para onde o utilizador é redirecionado
         PublicacaoDetailDTO dto = publicacaoService.atualizarComMetadadosExtraidos(id, publicacaoAtualizada);
         return ResponseEntity.ok(dto);
+    }
+    @PostMapping("/upload-extract-text")
+    public ResponseEntity<String> extrairTextoDeArquivo(@RequestParam("file") MultipartFile file) {
+        try {
+            String textoExtraido = publicacaoService.extrairTextoDeArquivo(file);
+            return ResponseEntity.ok(textoExtraido);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar o arquivo.");
+        }
     }
 }
 

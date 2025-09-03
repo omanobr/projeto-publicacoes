@@ -54,6 +54,18 @@ const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarC
     onUpdate: ({ editor }) => { onContentChange(editor.getHTML()); },
     onSelectionUpdate: () => { setForceUpdate(val => val + 1); }
   });
+
+  // VVV--- ADICIONE ESTE BLOCO DE CÓDIGO ---VVV
+  // Este hook observa mudanças na propriedade 'content'.
+  // Se o conteúdo externo (prop) for diferente do conteúdo interno do editor,
+  // ele força a atualização do editor.
+  useEffect(() => {
+    if (editor && editor.getHTML() !== content) {
+      // O 'false' no final evita que a função onUpdate seja chamada, prevenindo um loop infinito.
+      editor.commands.setContent(content, false);
+    }
+  }, [content, editor]);
+  // ^^^--- FIM DO BLOCO ADICIONADO ---^^^
   
   useEffect(() => {
     if (editor && onEditorInstance) {

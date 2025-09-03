@@ -5,6 +5,7 @@ import com.pmba.publicacoes.dto.VinculoResponseDTO;
 import com.pmba.publicacoes.service.VinculoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -36,6 +37,13 @@ public class VinculoController {
                 request.getPublicacaoOrigemId(),
                 request.getPublicacaoDestinoId()
         );
+    }
+
+    // VVV--- ADICIONE ESTE NOVO ENDPOINT PARA DELETAR ---VVV
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluirVinculo(@PathVariable Long id) {
+        vinculoService.excluirVinculo(id);
+        return ResponseEntity.noContent().build(); // Retorna um status 204 No Content, que é ideal para exclusões bem-sucedidas
     }
 
 }

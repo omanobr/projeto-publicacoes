@@ -4,19 +4,10 @@
   =============================================================
 */
 body {
-  /* 1. Transforma o corpo da página em um contêiner flexível */
   display: flex;
-  
-  /* 2. Empilha os itens verticalmente (um em cima do outro) */
   flex-direction: column;
-
-  /* 3. A MÁGICA: Centraliza todos os itens filhos no eixo horizontal */
   align-items: center; 
-  
-  /* Garante que o corpo ocupe no mínimo 100% da altura da tela */
   min-height: 100vh;
-
-  /* Estilos visuais que já tínhamos */
   margin: 0;
   background-color: #f0f2f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -160,13 +151,6 @@ header {
   color: #dc3545; /* Vermelho */
   background-color: #fbe9eb;
 }
-
-.trecho-alterado ins {
-  text-decoration: none;
-  color: #198754; /* Verde */
-  background-color: #e8f3ee;
-  font-weight: bold;
-}
 /* ... (seu CSS existente) ... */
 
 /* ================================================================= */
@@ -250,3 +234,60 @@ header {
   border-radius: 4px;
 }
 
+/* ================================================================= */
+/* ESTILOS APRIMORADOS PARA VÍNCULOS DE TEXTO                        */
+/* ================================================================= */
+
+/* Contêiner principal para o trecho alterado/revogado */
+.trecho-alterado {
+  position: relative; /* Essencial para o posicionamento do tooltip */
+  cursor: pointer;
+  text-decoration: none; /* Remove o sublinhado padrão do link */
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+/* Tooltip que aparece no hover */
+.trecho-alterado::after {
+  content: attr(data-vinculo-info); /* Pega o texto do nosso atributo de dados */
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px); /* Começa um pouco para baixo */
+  
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  white-space: nowrap;
+  z-index: 10;
+  
+  /* Efeito de transição */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Mostra o tooltip ao passar o mouse */
+.trecho-alterado:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0); /* Move para a posição final */
+}
+
+/* Estilo para o texto original (removido) */
+.trecho-alterado del {
+  text-decoration: line-through;
+  color: #c0392b; /* Vermelho mais escuro */
+  background-color: #f2dede; /* Fundo rosa claro */
+}
+
+/* Estilo para o novo texto (adicionado) */
+.trecho-alterado ins {
+  text-decoration: none;
+  color: #27ae60; /* Verde mais escuro */
+  background-color: #dff0d8; /* Fundo verde claro */
+  font-weight: 500;
+}

@@ -22,12 +22,36 @@ function AdminPage() {
   const handleContentChange = (content) => {
     setFormData(prevState => ({ ...prevState, conteudoHtml: content }));
   };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Mostra um feedback de "carregando..." para o usuário
+    setEnviando(true); 
+
+    fetch('http://localhost:8080/api/publicacoes/upload-extract-text', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Falha ao extrair texto do arquivo.');
+        return response.text(); // O back-end retorna o texto como HTML
+    })
+    .then(htmlContent => {
+        // Atualiza o estado do formulário com o conteúdo extraído
+        handleContentChange(htmlContent); 
+    })
+    .catch(err => setErro(err.message))
+    .finally(() => setEnviando(false));
+  };
   const handleSubmit = (event) => {
     event.preventDefault();
     setEnviando(true);
     setErro(null);
-
+  
     const novaPublicacao = {
         numero: formData.numero,
         tipo: formData.tipo,
@@ -55,6 +79,10 @@ function AdminPage() {
       <h2>Nova Publicação</h2>
       <p>Para definir o título, digite-o no editor abaixo e use o botão "Título".</p>
       <form onSubmit={handleSubmit} className="admin-form">
+        <div className="form-group">
+          <label htmlFor="file-upload">Importe o texto de um arquivo (PDF, DOCX)</label>
+          <input type="file" id="file-upload" onChange={handleFileChange} accept=".pdf,.docx" />
+        </div>
         <div className="form-group">
           <label htmlFor="numero">Número</label>
           <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />

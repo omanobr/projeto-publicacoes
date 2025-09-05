@@ -6,6 +6,7 @@ import com.pmba.publicacoes.model.TipoVinculo;
 import com.pmba.publicacoes.model.VinculoNormativo;
 import com.pmba.publicacoes.repository.PublicacaoRepository;
 import com.pmba.publicacoes.repository.VinculoNormativoRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
@@ -16,20 +17,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class PublicacaoService {
@@ -49,13 +49,7 @@ public class PublicacaoService {
         Document doc = Jsoup.parse(htmlRecebido);
         Element tituloElement = doc.selectFirst("span[data-meta=titulo]");
 
-        String tituloFinal;
-        if (tituloElement != null) {
-            tituloFinal = tituloElement.text();
-        } else {
-            tituloFinal = "Título não definido";
-        }
-
+        String tituloFinal = (tituloElement != null) ? tituloElement.text() : "Título não definido";
         String sanitizedHtml = Jsoup.clean(htmlRecebido, safelistConfigurado());
 
         publicacaoRepository.criarNovaPublicacao(
@@ -85,7 +79,7 @@ public class PublicacaoService {
         publicacaoParaSalvar.setConteudoHtml(sanitizedHtml);
         publicacaoParaSalvar.setBgo(dadosRecebidos.getBgo());
         Publicacao salvo = publicacaoRepository.save(publicacaoParaSalvar);
-        return convertToDetailDto(salvo);
+        return convertToDetailDto(salvo, Collections.emptyList());
     }
 
     @Transactional(readOnly = true)
@@ -94,29 +88,18 @@ public class PublicacaoService {
                 .orElseThrow(() -> new RuntimeException("Publicação não encontrada com id: " + id));
 
         Hibernate.initialize(publicacao.getVinculosGerados());
-        PublicacaoDetailDTO dto = convertToDetailDto(publicacao);
-
-        String conteudoProcessado = processarVinculos(publicacao, false);
-        dto.setConteudoHtml(conteudoProcessado);
-
         List<VinculoNormativo> vinculosRecebidos = vinculoRepository.findAllByPublicacaoDestinoId(id);
 
-        Set<VinculoPublicacaoInfoDTO> publicacoesVinculadas = new HashSet<>();
+        Set<VinculoPublicacaoInfoDTO> publicacoesVinculadas = Stream.concat(
+                publicacao.getVinculosGerados().stream().map(v -> new VinculoPublicacaoInfoDTO(v.getPublicacaoDestino().getId(), v.getPublicacaoDestino().getTitulo())),
+                vinculosRecebidos.stream().map(v -> new VinculoPublicacaoInfoDTO(v.getPublicacaoOrigem().getId(), v.getPublicacaoOrigem().getTitulo()))
+        ).collect(Collectors.toSet());
 
-        for (VinculoNormativo vinculo : publicacao.getVinculosGerados()) {
-            Publicacao pDestino = vinculo.getPublicacaoDestino();
-            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(pDestino.getId(), pDestino.getTitulo()));
-        }
-        for (VinculoNormativo vinculo : vinculosRecebidos) {
-            Publicacao pOrigem = vinculo.getPublicacaoOrigem();
-            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(pOrigem.getId(), pOrigem.getTitulo()));
-        }
-
-        dto.setPublicacoesVinculadas(new ArrayList<>(publicacoesVinculadas));
-
+        PublicacaoDetailDTO dto = convertToDetailDto(publicacao, new ArrayList<>(publicacoesVinculadas));
+        String conteudoProcessado = processarVinculos(publicacao, false, vinculosRecebidos);
+        dto.setConteudoHtml(conteudoProcessado);
         return dto;
     }
-
 
     @Transactional(readOnly = true)
     public PublicacaoEditDTO findByIdForEditing(Long id) {
@@ -124,6 +107,7 @@ public class PublicacaoService {
                 .orElseThrow(() -> new RuntimeException("Publicação não encontrada com id: " + id));
 
         Hibernate.initialize(publicacao.getVinculosGerados());
+        List<VinculoNormativo> vinculosRecebidosEntities = vinculoRepository.findAllByPublicacaoDestinoId(id);
 
         PublicacaoEditDTO dto = new PublicacaoEditDTO();
         dto.setId(publicacao.getId());
@@ -133,49 +117,38 @@ public class PublicacaoService {
         dto.setDataPublicacao(publicacao.getDataPublicacao());
         dto.setStatus(publicacao.getStatus());
         dto.setBgo(publicacao.getBgo());
-        String conteudoParaEdicao = processarVinculos(publicacao, true);
+
+        String conteudoParaEdicao = processarVinculos(publicacao, true, vinculosRecebidosEntities);
         dto.setConteudoHtml(conteudoParaEdicao);
-        List<VinculoSimpleDTO> vinculosGerados = publicacao.getVinculosGerados().stream()
+
+        dto.setVinculosGerados(publicacao.getVinculosGerados().stream()
                 .map(this::convertVinculoToSimpleDto)
-                .collect(Collectors.toList());
-        dto.setVinculosGerados(vinculosGerados);
-        List<VinculoNormativo> vinculosRecebidosEntities = vinculoRepository.findAllByPublicacaoDestinoId(id);
-        List<VinculoSimpleDTO> vinculosRecebidos = vinculosRecebidosEntities.stream()
+                .collect(Collectors.toList()));
+
+        dto.setVinculosRecebidos(vinculosRecebidosEntities.stream()
                 .map(this::convertVinculoToSimpleDto)
-                .collect(Collectors.toList());
-        dto.setVinculosRecebidos(vinculosRecebidos);
+                .collect(Collectors.toList()));
         return dto;
     }
 
-    @Transactional(readOnly = true)
-    public List<PublicacaoListDTO> findAllAsListDto() {
-        return publicacaoRepository.findAllForListView();
-    }
-
-    private String processarVinculos(Publicacao publicacao, boolean apenasTachado) {
-        List<VinculoNormativo> vinculosRecebidos = vinculoRepository.findAllByPublicacaoDestinoId(publicacao.getId());
+    private String processarVinculos(Publicacao publicacao, boolean apenasTachado, List<VinculoNormativo> vinculosRecebidos) {
         String conteudoProcessado = publicacao.getConteudoHtml();
-
-        if (vinculosRecebidos.isEmpty()) {
-            return conteudoProcessado;
-        }
+        if (vinculosRecebidos.isEmpty()) return conteudoProcessado;
 
         for (var vinculo : vinculosRecebidos) {
             String textoOriginal = vinculo.getTextoDoTrecho();
             if (textoOriginal == null || textoOriginal.isEmpty()) continue;
+
             String textoSubstituto;
 
             if (vinculo.getTipoVinculo() == TipoVinculo.ALTERA && vinculo.getTextoNovo() != null && !apenasTachado) {
-
-                String textoNovoInline = vinculo.getTextoNovo()
-                        .trim()
+                String textoNovoInline = vinculo.getTextoNovo().trim()
                         .replaceAll("</p>\\s*<p>", "<br>")
-                        .replaceAll("^<p>", "")
-                        .replaceAll("</p>$", "");
+                        .replaceAll("^<p>", "").replaceAll("</p>$", "");
 
                 textoSubstituto = String.format(
                         "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"Redação alterada pela Publicação %s\">" +
-                                "<del>%s</del><br><span class=\"novo-texto\"> %s</span>" +
+                                "<del>%s</del><br><ins>%s</ins>" +
                                 "</a>",
                         vinculo.getPublicacaoOrigem().getId(),
                         vinculo.getPublicacaoOrigem().getNumero(),
@@ -186,6 +159,8 @@ public class PublicacaoService {
                 if (apenasTachado) {
                     textoSubstituto = String.format("<del>%s</del>", textoOriginal);
                 } else {
+                    // VVV--- LÓGICA CORRIGIDA AQUI ---VVV
+                    // Adiciona a classe "trecho-revogado" para que o CSS possa identificar e aplicar o tooltip.
                     textoSubstituto = String.format(
                             "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Trecho revogado pela Publicação %s\">" +
                                     "<del>%s</del>" +
@@ -196,40 +171,37 @@ public class PublicacaoService {
                     );
                 }
             }
-
             conteudoProcessado = conteudoProcessado.replaceFirst(Pattern.quote(textoOriginal), Matcher.quoteReplacement(textoSubstituto));
         }
         return conteudoProcessado;
     }
 
     @Transactional(readOnly = true)
-    public List<PublicacaoListDTO> searchPublicacoes(String termo) {
-        LocalDate data = null;
-        String termoDeBusca = termo;
+    public List<PublicacaoListDTO> searchPublicacoes(BuscaPublicacaoDTO dto) {
+        Specification<Publicacao> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            data = LocalDate.parse(termoDeBusca, formatter);
-            termoDeBusca = null;
-        } catch (DateTimeParseException e) {
-            // Não é uma data, a busca continuará por texto.
-        }
+            if (dto.getNumero() != null && !dto.getNumero().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numero")), "%" + dto.getNumero().toLowerCase() + "%"));
+            }
+            if (dto.getAno() != null) {
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.function("YEAR", Integer.class, root.get("dataPublicacao")), dto.getAno()));
+            }
+            if (dto.getConteudo() != null && !dto.getConteudo().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("conteudoHtml")), "%" + dto.getConteudo().toLowerCase() + "%"));
+            }
+            if (dto.getDataInicial() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dataPublicacao"), dto.getDataInicial()));
+            }
+            if (dto.getDataFinal() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dataPublicacao"), dto.getDataFinal()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
 
-        List<Publicacao> publicacoes;
-        if (data != null) {
-            publicacoes = publicacaoRepository.findByDataPublicacaoOrderByDataPublicacaoDesc(data);
-        } else {
-            publicacoes = publicacaoRepository.findByTituloContainingIgnoreCaseOrNumeroContainingIgnoreCaseOrderByDataPublicacaoDesc(termoDeBusca, termoDeBusca);
-        }
+        Sort sort = Sort.by(Sort.Direction.DESC, "dataPublicacao", "id");
 
-        return publicacoes.stream()
-                .map(this::convertToListDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PublicacaoListDTO> searchPublicacoesAvancado(String conteudo) {
-        List<Publicacao> publicacoes = publicacaoRepository.searchByConteudo(conteudo);
+        List<Publicacao> publicacoes = publicacaoRepository.findAll(spec, sort);
         return publicacoes.stream()
                 .map(this::convertToListDto)
                 .collect(Collectors.toList());
@@ -247,7 +219,7 @@ public class PublicacaoService {
         return dto;
     }
 
-    private PublicacaoDetailDTO convertToDetailDto(Publicacao publicacao) {
+    private PublicacaoDetailDTO convertToDetailDto(Publicacao publicacao, List<VinculoPublicacaoInfoDTO> publicacoesVinculadas) {
         PublicacaoDetailDTO dto = new PublicacaoDetailDTO();
         dto.setId(publicacao.getId());
         dto.setTitulo(publicacao.getTitulo());
@@ -257,18 +229,19 @@ public class PublicacaoService {
         dto.setConteudoHtml(publicacao.getConteudoHtml());
         dto.setStatus(publicacao.getStatus());
         dto.setBgo(publicacao.getBgo());
+        dto.setPublicacoesVinculadas(publicacoesVinculadas);
         return dto;
     }
 
     private PublicacaoListDTO convertToListDto(Publicacao publicacao) {
-        PublicacaoListDTO dto = new PublicacaoListDTO();
-        dto.setId(publicacao.getId());
-        dto.setTitulo(publicacao.getTitulo());
-        dto.setNumero(publicacao.getNumero());
-        dto.setTipo(publicacao.getTipo());
-        dto.setDataPublicacao(publicacao.getDataPublicacao());
-        dto.setStatus(publicacao.getStatus());
-        return dto;
+        return new PublicacaoListDTO(
+                publicacao.getId(),
+                publicacao.getTitulo(),
+                publicacao.getNumero(),
+                publicacao.getTipo(),
+                publicacao.getDataPublicacao(),
+                publicacao.getStatus()
+        );
     }
 
     public String extrairTextoDeArquivo(MultipartFile file) throws IOException {
@@ -276,81 +249,32 @@ public class PublicacaoService {
         String textoSimples;
 
         if (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf")) {
-            PDDocument document = PDDocument.load(file.getInputStream());
-            PDFTextStripper stripper = new PDFTextStripper();
-            textoSimples = stripper.getText(document);
-            document.close();
+            try (PDDocument document = PDDocument.load(file.getInputStream())) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                textoSimples = stripper.getText(document);
+            }
         } else if (originalFilename != null && (originalFilename.toLowerCase().endsWith(".docx"))) {
-            XWPFDocument document = new XWPFDocument(file.getInputStream());
-            XWPFWordExtractor extractor = new XWPFWordExtractor(document);
-            textoSimples = extractor.getText();
-            extractor.close();
+            try (XWPFDocument document = new XWPFDocument(file.getInputStream());
+                 XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+                textoSimples = extractor.getText();
+            }
         } else {
             throw new IllegalArgumentException("Formato de arquivo não suportado.");
         }
-
         return converterTextoParaHtml(textoSimples);
     }
 
     private String converterTextoParaHtml(String textoSimples) {
-        if (textoSimples == null || textoSimples.trim().isEmpty()) {
-            return "";
-        }
+        if (textoSimples == null || textoSimples.trim().isEmpty()) return "";
 
         String[] lines = textoSimples.split("\\r?\\n");
-
-        List<String> rawParagraphs = new ArrayList<>();
-        StringBuilder paragraphBuilder = new StringBuilder();
-
-        for (int i = 0; i < lines.length; i++) {
-            String trimmedLine = lines[i].trim();
-            if (trimmedLine.isEmpty()) {
-                continue;
-            }
-            paragraphBuilder.append(trimmedLine);
-
-            boolean endsWithPunctuation = trimmedLine.endsWith(".") || trimmedLine.endsWith(":") || trimmedLine.endsWith(";");
-            boolean isAllCaps = !trimmedLine.isEmpty() && trimmedLine.equals(trimmedLine.toUpperCase()) && trimmedLine.matches(".*[A-Z].*");
-            boolean nextLineIsNewSection = false;
-            if (i + 1 < lines.length) {
-                String nextLine = lines[i + 1].trim();
-                if (nextLine.startsWith("Art.") || nextLine.startsWith("§") || nextLine.startsWith("Inc.")) {
-                    nextLineIsNewSection = true;
-                }
-            }
-
-            if (endsWithPunctuation || isAllCaps || nextLineIsNewSection) {
-                rawParagraphs.add(paragraphBuilder.toString());
-                paragraphBuilder.setLength(0);
-            } else {
-                paragraphBuilder.append(" ");
-            }
-        }
-        if (paragraphBuilder.length() > 0) {
-            rawParagraphs.add(paragraphBuilder.toString().trim());
-        }
-
         StringBuilder htmlResult = new StringBuilder();
-
-        Pattern headerExclusionPattern = Pattern.compile(
-                "\\d{1,2} de (Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro) de \\d{4}\\s+BGO\\s+Nº.*LEGISLAÇÃO",
-                Pattern.CASE_INSENSITIVE
-        );
-
-        Pattern pageRemovalPattern = Pattern.compile("\\s*(Pág|Pagina|Pag)\\.?\\s*\\d{1,4}\\s*", Pattern.CASE_INSENSITIVE);
-
-        for (String paragraph : rawParagraphs) {
-            if (headerExclusionPattern.matcher(paragraph).find()) {
-                continue;
-            }
-
-            String cleanedParagraph = pageRemovalPattern.matcher(paragraph).replaceAll("").trim();
-
-            if (!cleanedParagraph.isEmpty()) {
-                htmlResult.append("<p>").append(cleanedParagraph).append("</p>");
+        for (String line : lines) {
+            String trimmedLine = line.trim();
+            if (!trimmedLine.isEmpty()) {
+                htmlResult.append("<p>").append(trimmedLine).append("</p>");
             }
         }
-
         return htmlResult.toString();
     }
 }

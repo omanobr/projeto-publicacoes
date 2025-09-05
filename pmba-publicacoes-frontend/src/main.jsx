@@ -6,8 +6,7 @@ import App from './App.jsx';
 import HomePage from './pages/HomePage.jsx';
 import PublicacaoPage from './pages/PublicacaoPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
-import EditPage from './pages/EditPage.jsx';
-import BuscaAvancadaPage from './pages/BuscaAvancadaPage.jsx';
+import EditPage from './pages/EditPage.jsx'; 
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
 
@@ -24,28 +23,22 @@ const router = createBrowserRouter([
         path: "/publicacao/:id",
         element: <PublicacaoPage />,
       },
-      { // <-- 2. ADICIONE ESTA NOVA ROTA
+      {
         path: "/admin",
         element: <AdminPage />,
       },
-      { // <-- 2. ADICIONE ESTA NOVA ROTA DINÂMICA
+      {
         path: "/admin/editar/:id",
         element: <EditPage />,
       },
-      { // <-- ADICIONE ESTA NOVA ROTA
-        path: "/busca-avancada",
-        element: <BuscaAvancadaPage />,
-      }
     ],
   },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* VVV--- Envolva o RouterProvider com o AuthProvider ---VVV */}
     <AuthProvider>
       <RouterProvider router={router} />
     </AuthProvider>
-    {/* ^^^----------------------------------------------------^^^ */}
   </React.StrictMode>,
 );

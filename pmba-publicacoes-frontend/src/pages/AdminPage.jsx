@@ -79,8 +79,9 @@ function AdminPage() {
       <Link to="/">&larr; Voltar para a lista</Link>
       <h2>Nova Publicação</h2>
       <p>Para definir o título, digite-o no editor abaixo e use o botão "Título".</p>
+      <br />      
       <form onSubmit={handleSubmit} className="admin-form">
-        <div className="form-group">
+        <div className="form-group">          
           <label htmlFor="file-upload">Importe o texto de um arquivo (PDF, DOCX)</label>
           <input type="file" id="file-upload" onChange={handleFileChange} accept=".pdf,.docx" />
         </div>

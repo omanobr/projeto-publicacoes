@@ -10,7 +10,7 @@
 .app-header .logo a {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #0056b3;
+  color: #000000;
   text-decoration: none;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .app-header .main-nav a:hover {
-  border-color: #0056b3;
+  border-color: #4a4a4b;
 }
 
 /* O NavLink adiciona a classe 'active' ao link da página atual */

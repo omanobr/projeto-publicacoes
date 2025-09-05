@@ -12,7 +12,6 @@ function Header() {
       </div>
       <nav className="main-nav">
         <NavLink to="/">Publicações</NavLink>
-        <NavLink to="/busca-avancada">Busca Avançada</NavLink>
       </nav>
       <div className="admin-nav">
         {/* O botão agora tem lógica de verdade! */}

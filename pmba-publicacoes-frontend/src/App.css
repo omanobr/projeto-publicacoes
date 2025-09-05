@@ -1,10 +1,10 @@
 /* ============================================================= */
-/* LAYOUT E ESTILOS GERAIS                                       */
+/* LAYOUT E ESTILOS GERAIS (NOVA PALETA DE CORES PMBA)         */
 /* ============================================================= */
 body {
-  background-color: #f0f2f5;
+  background-color: #8a7e6e; /* Fundo principal marrom/cáqui da imagem */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: #333;
+  color: #3b3b3b; /* Texto principal em cinza escuro */
 }
 
 .app-container {
@@ -16,59 +16,160 @@ body {
   padding-bottom: 2rem;
 }
 
-/* ... (outros estilos gerais como lista-publicacoes, publicacao-detalhe, etc.) ... */
+h2 {
+  border-bottom: 2px solid #3b3b3b;
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
+  color: #3b3b3b;
+}
+
+/* ============================================================= */
+/* ESTILOS DO PAINEL DE FILTRO (ATUALIZADO)                      */
+/* ============================================================= */
+.filter-panel {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 2.5rem;
+}
+
+.filter-panel h3 {
+  border: none;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  color: #3b3b3b;
+  text-transform: uppercase;
+}
+
+.filter-form .form-row {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-form .form-group-filter {
+  display: flex;
+  flex-direction: column;
+  flex: 1; 
+  min-width: 200px;
+}
+
+.form-group-filter label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: #222222;
+}
+
+.form-group-filter input {
+  padding: 0.75rem;
+  border: 1px solid #a19687;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #fdfdfd;
+  color: #3b3b3b;
+}
+
+.form-actions-filter {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filter-button, .clear-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.filter-button:hover, .clear-button:hover {
+  transform: translateY(-2px);
+}
+
+.filter-button {
+  background-color: #b9975b; 
+  color: #ffffff;
+}
+.filter-button:hover {
+  background-color: #a88a50;
+}
+
+.clear-button {
+  background-color: #6c757d;
+  color: white;
+}
+.clear-button:hover {
+  background-color: #5a6268;
+}
+
+/* ============================================================= */
+/* ESTILOS DA LISTA DE PUBLICAÇÕES                              */
+/* ============================================================= */
 .lista-publicacoes ul { list-style: none; padding: 0; }
-.lista-publicacoes li { background-color: #ffffff; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); transition: transform 0.2s ease-in-out; }
-.lista-publicacoes li:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-.lista-publicacoes a { text-decoration: none; color: #0056b3; font-weight: 500; }
-.lista-publicacoes a:hover { text-decoration: underline; }
-.publicacao-detalhe { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.publicacao-detalhe a { display: inline-block; margin-bottom: 1rem; color: #2b80db; text-decoration: none; }
-.conteudo-publicacao { line-height: 1.6; }
+.lista-publicacoes li { 
+  background-color: rgba(255, 255, 255, 0.9); 
+  margin-bottom: 1rem; 
+  padding: 1rem 1.5rem; 
+  border-radius: 8px; 
+  border: 1px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out; 
+}
+.lista-publicacoes li:hover { 
+  transform: translateY(-3px); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-color: #b9975b; 
+}
+.lista-publicacoes a { 
+  text-decoration: none; 
+  color: #3b3b3b; 
+  font-weight: 500; 
+}
+.lista-publicacoes a:hover { 
+  color: #b9975b;
+  text-decoration: underline; 
+}
+.pub-details {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
 .status-tag { margin-left: 1rem; padding: 0.2rem 0.6rem; font-size: 0.8em; font-weight: bold; border-radius: 10px; color: white; }
 .status-tag.revogado { background-color: #dc3545; }
-.revogado-item { opacity: 0.6; background-color: #f8f9fa; }
-.disclaimer-text { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; text-align: center; font-style: italic; color: #dc3545; }
-
-
+.revogado-item { opacity: 0.7; }
 /* ================================================================= */
-/* ESTILO FINAL E CORRIGIDO PARA O BLOCO DE ALTERAÇÃO                */
+/* ESTILO PARA O BLOCO DE ALTERAÇÃO E REVOGAÇÃO (CORRIGIDO)          */
 /* ================================================================= */
 
-/* Contêiner principal para o bloco da alteração */
-.trecho-alterado {
-   /* Garante que o bloco ocupe sua própria linha */
-    /* Adiciona espaço vertical antes e depois */
-   /* Adiciona um recuo à esquerda */
-   /* Barra lateral sutil para indicar o bloco */
-  position: relative; /* Necessário para o tooltip */
+/* Contêineres principais para os blocos de vínculo */
+.trecho-alterado,
+.trecho-revogado {
+  position: relative;
   cursor: help;
 }
 
-/* Estilo aplicado APENAS ao texto antigo (DELETADO) */
-.trecho-alterado del {
-  color: #dc3545; /* Vermelho */
-  text-decoration: line-through; /* APLICA O RISCADO AQUI */
-  background-color: transparent; /* Sem fundo de caixa */
-}
-
-/* Estilo aplicado APENAS ao texto novo (INSERIDO) */
-.trecho-alterado ins {
-  color: #02f03a; /* Verde */
-  text-decoration: none; /* GARANTE QUE NÃO HAJA RISCADO OU SUBLINHADO */
-  background-color: transparent; /* Sem fundo de caixa */
-  font-weight: 500;
-}
-
-/* Tooltip que aparece no hover */
-.trecho-alterado::after {
+/* Tooltip que aparece no hover para AMBOS os tipos */
+.trecho-alterado::after,
+.trecho-revogado::after {
   content: attr(data-vinculo-info);
   position: absolute;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 5px;
-  background-color: #333;
+  background-color: #212529;
   color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
@@ -81,23 +182,64 @@ body {
   pointer-events: none;
 }
 
-.trecho-alterado:hover::after {
+.trecho-alterado:hover::after,
+.trecho-revogado:hover::after {
   opacity: 1;
   visibility: visible;
 }
 
+/* Estilo para o texto antigo (DELETADO) em AMBOS os casos */
+.trecho-alterado del,
+.trecho-revogado del {
+    color: #dc3545;
+    text-decoration: line-through;
+    background-color: transparent;
+}
+
+/* Estilo aplicado APENAS ao texto novo (INSERIDO) */
+.trecho-alterado ins {
+  color: #28a745; 
+  background-color: transparent;
+  font-weight: 500;
+  text-decoration: none !important; 
+  display: inline-block; /* Necessário para o padding e border funcionarem bem */
+  padding-top: 0.5rem; /* Espaço acima do texto */
+  margin-top: 0.5rem; /* Espaço acima da linha */
+  border-top: 1px solid #ddd; /* A linha divisória que você lembrou */
+}
+
+
+
 /* ================================================================= */
-/* ESTILOS PARA O PAINEL DE VÍNCULOS                                 */
+/* ESTILOS PARA O PAINEL DE VÍNCULOS E PÁGINA DE DETALHES            */
 /* ================================================================= */
-/* ... (cole aqui as regras de .vinculos-panel, .vinculos-list, etc. do seu App.css original) ... */
-.vinculos-panel { margin-top: 2rem; padding: 1.5rem; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+.vinculos-panel, .publicacao-detalhe { 
+  margin-top: 2rem; 
+  padding: 1.5rem; 
+  background-color: rgba(255, 255, 255, 0.9); 
+  border: 1px solid rgba(0, 0, 0, 0.1); 
+  border-radius: 8px; 
+}
 .vinculos-panel h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
 .vinculos-panel h4 { margin-top: 1.5rem; margin-bottom: 0.5rem; color: #495057; }
 .vinculos-list { list-style: none; padding: 0; }
-.vinculos-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: #fff; border: 1px solid #eee; border-radius: 4px; margin-bottom: 0.5rem; }
-.vinculo-info a { font-weight: 500; color: #0056b3; text-decoration: none; }
-.vinculo-info a:hover { text-decoration: underline; }
+.vinculos-list li { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 0.75rem; 
+  background-color: #fdfdfd; 
+  border: 1px solid #eee; 
+  border-radius: 4px; 
+  margin-bottom: 0.5rem; 
+}
+.vinculo-info a { font-weight: 500; color: #3b3b3b; text-decoration: none; }
+.vinculo-info a:hover { color: #b9975b; text-decoration: underline; }
 .vinculo-info span { display: block; font-size: 0.9em; color: #6c757d; margin-top: 0.25rem; }
 .delete-vinculo-btn { background-color: #fbe0e2; color: #dc3545; border: 1px solid #dc3545; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s, color 0.2s; }
 .delete-vinculo-btn:hover { background-color: #dc3545; color: white; }
 .no-vinculos { color: #6c757d; font-style: italic; padding: 1rem; background-color: #e9ecef; text-align: center; border-radius: 4px; }
+.publicacao-detalhe > a { display: inline-block; margin-bottom: 1rem; color: #b9975b; text-decoration: none; font-weight: bold; }
+.conteudo-publicacao { line-height: 1.6; }
+.disclaimer-text { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 0, 0, 0.1); text-align: center; font-style: italic; color: #fc0000; }
+

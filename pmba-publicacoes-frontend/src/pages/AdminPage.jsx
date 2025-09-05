@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import RichTextEditor from '../components/RichTextEditor';
+import ScrollToTopButton from '../components/ScrollToTopButton'; // VVV--- IMPORTAÇÃO ADICIONADA ---VVV
 import './AdminPage.css';
 
 function AdminPage() {
@@ -23,6 +24,7 @@ function AdminPage() {
   const handleContentChange = (content) => {
     setFormData(prevState => ({ ...prevState, conteudoHtml: content }));
   };
+  
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -30,7 +32,6 @@ function AdminPage() {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Mostra um feedback de "carregando..." para o usuário
     setEnviando(true); 
 
     fetch('http://localhost:8080/api/publicacoes/upload-extract-text', {
@@ -39,15 +40,15 @@ function AdminPage() {
     })
     .then(response => {
         if (!response.ok) throw new Error('Falha ao extrair texto do arquivo.');
-        return response.text(); // O back-end retorna o texto como HTML
+        return response.text();
     })
     .then(htmlContent => {
-        // Atualiza o estado do formulário com o conteúdo extraído
         handleContentChange(htmlContent); 
     })
     .catch(err => setErro(err.message))
     .finally(() => setEnviando(false));
   };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     setEnviando(true);
@@ -58,6 +59,7 @@ function AdminPage() {
         tipo: formData.tipo,
         dataPublicacao: formData.dataPublicacao,
         conteudoHtml: formData.conteudoHtml,
+        bgo: formData.bgo,
     };
 
     fetch('http://localhost:8080/api/publicacoes', {
@@ -68,7 +70,7 @@ function AdminPage() {
     .then(response => {
         if (!response.ok) throw new Error('Falha ao criar a publicação.');
         alert('Publicação criada com sucesso!');
-        navigate(`/`); // Navega para a página inicial após o sucesso
+        navigate(`/`);
     })
     .catch(err => setErro(err.message))
     .finally(() => setEnviando(false));
@@ -78,10 +80,17 @@ function AdminPage() {
     <div className="admin-page">
       <Link to="/">&larr; Voltar para a lista</Link>
       <h2>Nova Publicação</h2>
+
+      <div className="page-actions-top">
+        <button type="submit" form="admin-form-id" disabled={enviando}>
+          {enviando ? 'Enviando...' : 'Salvar Publicação'}
+        </button>
+      </div>
+      
       <p>Para definir o título, digite-o no editor abaixo e use o botão "Título".</p>
-      <br />      
-      <form onSubmit={handleSubmit} className="admin-form">
-        <div className="form-group">          
+      
+      <form onSubmit={handleSubmit} className="admin-form" id="admin-form-id">
+        <div className="form-group">
           <label htmlFor="file-upload">Importe o texto de um arquivo (PDF, DOCX)</label>
           <input type="file" id="file-upload" onChange={handleFileChange} accept=".pdf,.docx" />
         </div>
@@ -114,12 +123,13 @@ function AdminPage() {
           />
         </div>
         {erro && <p className="error-message">{erro}</p>}
-        <button type="submit" disabled={enviando}>
-          {enviando ? 'Enviando...' : 'Salvar Publicação'}
-        </button>
       </form>
+      
+      {/* VVV--- BOTÃO ADICIONADO AQUI ---VVV */}
+      <ScrollToTopButton />
     </div>
   );
 }
 
 export default AdminPage;
+

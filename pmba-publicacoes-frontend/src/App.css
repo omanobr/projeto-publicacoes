@@ -1,10 +1,10 @@
 /* ============================================================= */
-/* LAYOUT E ESTILOS GERAIS (NOVA PALETA DE CORES PMBA)         */
+/* LAYOUT E ESTILOS GERAIS                                       */
 /* ============================================================= */
 body {
-  background-color: #8a7e6e; /* Fundo principal marrom/cáqui da imagem */
+  background-color: #f0f2f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: #3b3b3b; /* Texto principal em cinza escuro */
+  color: #333;
 }
 
 .app-container {
@@ -17,38 +17,54 @@ body {
 }
 
 h2 {
-  border-bottom: 2px solid #3b3b3b;
-  padding-bottom: 0.5rem;
-  margin-bottom: 2rem;
-  font-size: 1.75rem;
-  color: #3b3b3b;
+    color: #333;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #0056b3;
+    font-size: 1.8rem;
 }
 
 /* ============================================================= */
-/* ESTILOS DO PAINEL DE FILTRO (ATUALIZADO)                      */
+/* NOVO LAYOUT DA PÁGINA INICIAL (FILTROS À ESQUERDA)            */
+/* ============================================================= */
+.home-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.lista-publicacoes {
+  flex: 3;
+}
+
+@media (max-width: 900px) {
+  .home-container {
+    flex-direction: column;
+  }
+
+  .filter-panel {
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+}
+
+
+/* ============================================================= */
+/* ESTILOS DO PAINEL DE FILTRO                                   */
 /* ============================================================= */
 .filter-panel {
-  background-color: rgba(0, 0, 0, 0.05);
+  flex: 1;
+  max-width: 350px;
+  background-color: #f8f9fa;
   padding: 1.5rem 2rem;
+  border: 1px solid #dee2e6;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  margin-bottom: 2.5rem;
-}
-
-.filter-panel h3 {
-  border: none;
-  padding: 0;
-  margin-top: 0;
-  margin-bottom: 2rem;
-  font-size: 1.25rem;
-  color: #3b3b3b;
-  text-transform: uppercase;
 }
 
 .filter-form .form-row {
   display: flex;
-  flex-wrap: wrap; 
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -56,31 +72,29 @@ h2 {
   display: flex;
   flex-direction: column;
   flex: 1; 
-  min-width: 200px;
+  margin-bottom: 1rem;
 }
 
 .form-group-filter label {
   margin-bottom: 0.5rem;
   font-weight: 500;
   font-size: 0.9em;
-  color: #222222;
+  color: #555;
 }
 
 .form-group-filter input {
   padding: 0.75rem;
-  border: 1px solid #a19687;
+  border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
-  background-color: #fdfdfd;
-  color: #3b3b3b;
 }
 
 .form-actions-filter {
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
 }
 
 .filter-button, .clear-button {
@@ -88,21 +102,17 @@ h2 {
   border: none;
   border-radius: 4px;
   font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.filter-button:hover, .clear-button:hover {
-  transform: translateY(-2px);
+  transition: background-color 0.2s;
+  flex-grow: 1;
 }
 
 .filter-button {
-  background-color: #b9975b; 
-  color: #ffffff;
+  background-color: #0056b3;
+  color: white;
 }
 .filter-button:hover {
-  background-color: #a88a50;
+  background-color: #004494;
 }
 
 .clear-button {
@@ -113,55 +123,50 @@ h2 {
   background-color: #5a6268;
 }
 
+
 /* ============================================================= */
 /* ESTILOS DA LISTA DE PUBLICAÇÕES                              */
 /* ============================================================= */
 .lista-publicacoes ul { list-style: none; padding: 0; }
-.lista-publicacoes li { 
-  background-color: rgba(255, 255, 255, 0.9); 
-  margin-bottom: 1rem; 
-  padding: 1rem 1.5rem; 
-  border-radius: 8px; 
-  border: 1px solid transparent;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out; 
-}
-.lista-publicacoes li:hover { 
-  transform: translateY(-3px); 
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border-color: #b9975b; 
-}
-.lista-publicacoes a { 
-  text-decoration: none; 
-  color: #3b3b3b; 
-  font-weight: 500; 
-}
-.lista-publicacoes a:hover { 
-  color: #b9975b;
-  text-decoration: underline; 
-}
+.lista-publicacoes li { background-color: #ffffff; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); transition: transform 0.2s ease-in-out; }
+.lista-publicacoes li:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+.lista-publicacoes a { text-decoration: none; color: #0056b3; font-weight: 500; }
+.lista-publicacoes a:hover { text-decoration: underline; }
 .pub-details {
     font-size: 0.9em;
-    color: #666;
+    color: #6c757d;
     margin-top: 0.5rem;
 }
 
 .status-tag { margin-left: 1rem; padding: 0.2rem 0.6rem; font-size: 0.8em; font-weight: bold; border-radius: 10px; color: white; }
 .status-tag.revogado { background-color: #dc3545; }
-.revogado-item { opacity: 0.7; }
-/* ================================================================= */
-/* ESTILO PARA O BLOCO DE ALTERAÇÃO E REVOGAÇÃO (CORRIGIDO)          */
-/* ================================================================= */
+.revogado-item { opacity: 0.6; background-color: #f8f9fa; }
 
-/* Contêineres principais para os blocos de vínculo */
-.trecho-alterado,
+/* ================================================================= */
+/* ESTILOS PARA BLOCOS DE ALTERAÇÃO E REVOGAÇÃO                    */
+/* ================================================================= */
+.anotacao-alteracao {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.anotacao-alteracao a {
+    font-weight: 600;
+}
+
 .trecho-revogado {
   position: relative;
   cursor: help;
+  text-decoration: line-through;
+  color: #dc3545;
 }
 
-/* Tooltip que aparece no hover para AMBOS os tipos */
-.trecho-alterado::after,
 .trecho-revogado::after {
   content: attr(data-vinculo-info);
   position: absolute;
@@ -169,7 +174,7 @@ h2 {
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 5px;
-  background-color: #212529;
+  background-color: #333;
   color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
@@ -182,64 +187,54 @@ h2 {
   pointer-events: none;
 }
 
-.trecho-alterado:hover::after,
 .trecho-revogado:hover::after {
   opacity: 1;
   visibility: visible;
 }
 
-/* Estilo para o texto antigo (DELETADO) em AMBOS os casos */
-.trecho-alterado del,
-.trecho-revogado del {
-    color: #dc3545;
-    text-decoration: line-through;
-    background-color: transparent;
-}
-
-/* Estilo aplicado APENAS ao texto novo (INSERIDO) */
-.trecho-alterado ins {
-  color: #28a745; 
-  background-color: transparent;
-  font-weight: 500;
-  text-decoration: none !important; 
-  display: inline-block; /* Necessário para o padding e border funcionarem bem */
-  padding-top: 0.5rem; /* Espaço acima do texto */
-  margin-top: 0.5rem; /* Espaço acima da linha */
-  border-top: 1px solid #ddd; /* A linha divisória que você lembrou */
-}
-
-
 
 /* ================================================================= */
-/* ESTILOS PARA O PAINEL DE VÍNCULOS E PÁGINA DE DETALHES            */
+/* ESTILOS PARA O PAINEL DE VÍNCULOS E PÁGINAS DE EDIÇÃO/CRIAÇÃO     */
 /* ================================================================= */
-.vinculos-panel, .publicacao-detalhe { 
-  margin-top: 2rem; 
-  padding: 1.5rem; 
-  background-color: rgba(255, 255, 255, 0.9); 
-  border: 1px solid rgba(0, 0, 0, 0.1); 
-  border-radius: 8px; 
-}
+.vinculos-panel { margin-top: 2rem; padding: 1.5rem; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
 .vinculos-panel h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
 .vinculos-panel h4 { margin-top: 1.5rem; margin-bottom: 0.5rem; color: #495057; }
 .vinculos-list { list-style: none; padding: 0; }
-.vinculos-list li { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 0.75rem; 
-  background-color: #fdfdfd; 
-  border: 1px solid #eee; 
-  border-radius: 4px; 
-  margin-bottom: 0.5rem; 
-}
-.vinculo-info a { font-weight: 500; color: #3b3b3b; text-decoration: none; }
-.vinculo-info a:hover { color: #b9975b; text-decoration: underline; }
+.vinculos-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: #fff; border: 1px solid #eee; border-radius: 4px; margin-bottom: 0.5rem; }
+.vinculo-info a { font-weight: 500; color: #0056b3; text-decoration: none; }
+.vinculo-info a:hover { text-decoration: underline; }
 .vinculo-info span { display: block; font-size: 0.9em; color: #6c757d; margin-top: 0.25rem; }
 .delete-vinculo-btn { background-color: #fbe0e2; color: #dc3545; border: 1px solid #dc3545; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s, color 0.2s; }
 .delete-vinculo-btn:hover { background-color: #dc3545; color: white; }
 .no-vinculos { color: #6c757d; font-style: italic; padding: 1rem; background-color: #e9ecef; text-align: center; border-radius: 4px; }
-.publicacao-detalhe > a { display: inline-block; margin-bottom: 1rem; color: #b9975b; text-decoration: none; font-weight: bold; }
+.publicacao-detalhe { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.publicacao-detalhe > a { display: inline-block; margin-bottom: 1rem; color: #2b80db; text-decoration: none; }
 .conteudo-publicacao { line-height: 1.6; }
-.disclaimer-text { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 0, 0, 0.1); text-align: center; font-style: italic; color: #fc0000; }
+.disclaimer-text { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; text-align: center; font-style: italic; color: #dc3545; }
+
+/* ================================================================= */
+/* BOTÃO DE VOLTAR AO TOPO                                           */
+/* ================================================================= */
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: opacity 0.3s, transform 0.3s;
+  opacity: 1;
+}
+
+.scroll-to-top-btn:hover {
+  background-color: #004494;
+  transform: scale(1.1);
+}
 

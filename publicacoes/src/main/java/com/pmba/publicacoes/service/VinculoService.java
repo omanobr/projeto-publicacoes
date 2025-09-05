@@ -1,8 +1,8 @@
 package com.pmba.publicacoes.service;
 
-import com.pmba.publicacoes.model.TipoVinculo; // Adicione este import
-import java.util.List; // Adicione este import
-import java.util.stream.Collectors; // Adicione este import
+import com.pmba.publicacoes.model.TipoVinculo;
+import java.util.List;
+import java.util.stream.Collectors;
 import com.pmba.publicacoes.dto.VinculoResponseDTO;
 import com.pmba.publicacoes.model.Publicacao;
 import com.pmba.publicacoes.model.StatusPublicacao;
@@ -28,12 +28,22 @@ public class VinculoService {
         Publicacao destino = publicacaoRepository.findById(publicacaoDestinoId)
                 .orElseThrow(() -> new RuntimeException("Publicação de destino não encontrada com id: " + publicacaoDestinoId));
 
+        // VVV--- NOVA LÓGICA PARA ATUALIZAR O DOCUMENTO DE DESTINO ---VVV
+        if (tipoVinculo == TipoVinculo.ALTERA && textoNovo != null && !textoNovo.isEmpty()) {
+            String conteudoAtual = destino.getConteudoHtml();
+            // Substitui o texto antigo pelo novo no HTML da publicação de destino
+            String novoConteudo = conteudoAtual.replace(textoDoTrecho, textoNovo);
+            destino.setConteudoHtml(novoConteudo);
+            publicacaoRepository.save(destino); // Salva a alteração
+        }
+        // ^^^--- FIM DA NOVA LÓGICA ---^^^
+
         VinculoNormativo novoVinculo = new VinculoNormativo();
         novoVinculo.setPublicacaoOrigem(origem);
         novoVinculo.setPublicacaoDestino(destino);
         novoVinculo.setTipoVinculo(tipoVinculo);
         novoVinculo.setTextoDoTrecho(textoDoTrecho);
-        novoVinculo.setTextoNovo(textoNovo); // Salva o novo texto
+        novoVinculo.setTextoNovo(textoNovo);
 
         VinculoNormativo salvo = vinculoRepository.save(novoVinculo);
         return convertToResponseDto(salvo);
@@ -61,26 +71,33 @@ public class VinculoService {
 
     @Transactional
     public void excluirVinculo(Long vinculoId) {
-        // 1. Busca o vínculo para ter acesso aos seus detalhes antes de apagar
         VinculoNormativo vinculoParaExcluir = vinculoRepository.findById(vinculoId)
                 .orElseThrow(() -> new RuntimeException("Vínculo não encontrado com id: " + vinculoId));
 
         Publicacao publicacaoDestino = vinculoParaExcluir.getPublicacaoDestino();
         TipoVinculo tipoVinculo = vinculoParaExcluir.getTipoVinculo();
 
-        // 2. Apaga o vínculo
-        vinculoRepository.delete(vinculoParaExcluir);
-        vinculoRepository.flush(); // Garante que a exclusão seja aplicada no banco antes da próxima consulta
+        // VVV--- LÓGICA PARA REVERTER A ALTERAÇÃO ---VVV
+        if (tipoVinculo == TipoVinculo.ALTERA) {
+            String conteudoAtual = publicacaoDestino.getConteudoHtml();
+            String textoAntigo = vinculoParaExcluir.getTextoDoTrecho();
+            String textoNovo = vinculoParaExcluir.getTextoNovo();
+            // Reverte a alteração, substituindo o texto novo pelo antigo
+            String conteudoRestaurado = conteudoAtual.replace(textoNovo, textoAntigo);
+            publicacaoDestino.setConteudoHtml(conteudoRestaurado);
+            publicacaoRepository.save(publicacaoDestino);
+        }
+        // ^^^--- FIM DA LÓGICA DE REVERSÃO ---^^^
 
-        // 3. Se o vínculo era uma revogação total, verifica se a publicação deve voltar a ser ATIVA
+        vinculoRepository.delete(vinculoParaExcluir);
+        vinculoRepository.flush();
+
         if (tipoVinculo == TipoVinculo.REVOGA) {
-            // Verifica se existem *outros* vínculos de revogação total para este mesmo destino
             long outrosVinculosDeRevogacao = vinculoRepository.findAllByPublicacaoDestinoId(publicacaoDestino.getId())
                     .stream()
                     .filter(v -> v.getTipoVinculo() == TipoVinculo.REVOGA)
                     .count();
 
-            // Se não houver mais nenhum, reativa a publicação
             if (outrosVinculosDeRevogacao == 0) {
                 publicacaoDestino.setStatus(StatusPublicacao.ATIVA);
                 publicacaoRepository.save(publicacaoDestino);
@@ -101,4 +118,3 @@ public class VinculoService {
         return dto;
     }
 }
-

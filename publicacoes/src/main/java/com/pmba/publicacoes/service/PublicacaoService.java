@@ -8,7 +8,8 @@ import com.pmba.publicacoes.repository.PublicacaoRepository;
 import com.pmba.publicacoes.repository.VinculoNormativoRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.hibernate.Hibernate;
@@ -23,12 +24,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.awt.geom.Rectangle2D;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.function.Function;
+
+
+import java.io.IOException;
 import java.util.stream.Stream;
 
 @Service
@@ -131,49 +136,45 @@ public class PublicacaoService {
         return dto;
     }
 
-    private String processarVinculos(Publicacao publicacao, boolean apenasTachado, List<VinculoNormativo> vinculosRecebidos) {
-        String conteudoProcessado = publicacao.getConteudoHtml();
-        if (vinculosRecebidos.isEmpty()) return conteudoProcessado;
+    private String processarVinculos(Publicacao publicacao, boolean paraEdicao, List<VinculoNormativo> vinculosRecebidos) {
+        Document doc = Jsoup.parse(publicacao.getConteudoHtml());
 
-        for (var vinculo : vinculosRecebidos) {
+        for (VinculoNormativo vinculo : vinculosRecebidos) {
+            TipoVinculo tipo = vinculo.getTipoVinculo();
             String textoOriginal = vinculo.getTextoDoTrecho();
-            if (textoOriginal == null || textoOriginal.isEmpty()) continue;
+            String textoNovo = vinculo.getTextoNovo();
 
-            String textoSubstituto;
-
-            if (vinculo.getTipoVinculo() == TipoVinculo.ALTERA && vinculo.getTextoNovo() != null && !apenasTachado) {
-                String textoNovoInline = vinculo.getTextoNovo().trim()
-                        .replaceAll("</p>\\s*<p>", "<br>")
-                        .replaceAll("^<p>", "").replaceAll("</p>$", "");
-
-                textoSubstituto = String.format(
-                        "<a href=\"/publicacao/%d\" class=\"trecho-alterado\" data-vinculo-info=\"Redação alterada pela Publicação %s\">" +
-                                "<del>%s</del><br><ins>%s</ins>" +
-                                "</a>",
+            if (tipo == TipoVinculo.REVOGA_PARCIALMENTE && textoOriginal != null) {
+                String spanRevogado = String.format(
+                        "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Trecho revogado pela Publicação %s\"><del>%s</del></a>",
                         vinculo.getPublicacaoOrigem().getId(),
                         vinculo.getPublicacaoOrigem().getNumero(),
-                        textoOriginal,
-                        textoNovoInline
+                        textoOriginal
                 );
-            } else {
-                if (apenasTachado) {
-                    textoSubstituto = String.format("<del>%s</del>", textoOriginal);
-                } else {
-                    // VVV--- LÓGICA CORRIGIDA AQUI ---VVV
-                    // Adiciona a classe "trecho-revogado" para que o CSS possa identificar e aplicar o tooltip.
-                    textoSubstituto = String.format(
-                            "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Trecho revogado pela Publicação %s\">" +
-                                    "<del>%s</del>" +
-                                    "</a>",
-                            vinculo.getPublicacaoOrigem().getId(),
-                            vinculo.getPublicacaoOrigem().getNumero(),
-                            textoOriginal
-                    );
+                String htmlDoc = doc.html().replace(textoOriginal, spanRevogado);
+                doc = Jsoup.parse(htmlDoc);
+            }
+
+            if (tipo == TipoVinculo.ALTERA && textoNovo != null && !paraEdicao) {
+                for (Element p : doc.select("p, span, div")) {
+                    if (p.text().contains(textoNovo)) {
+                        String anotacaoHtml = String.format(
+                                "<div class=\"anotacao-alteracao\">" +
+                                        "  <p>Alterado pela <a href=\"/publicacao/%d\">Publicação nº %s</a>.</p>" +
+                                        "  <p><strong>Redação original:</strong> \"%s\"</p>" +
+                                        "</div>",
+                                vinculo.getPublicacaoOrigem().getId(),
+                                vinculo.getPublicacaoOrigem().getNumero(),
+                                textoOriginal
+                        );
+                        p.after(anotacaoHtml);
+                        break;
+                    }
                 }
             }
-            conteudoProcessado = conteudoProcessado.replaceFirst(Pattern.quote(textoOriginal), Matcher.quoteReplacement(textoSubstituto));
         }
-        return conteudoProcessado;
+
+        return doc.body().html();
     }
 
     @Transactional(readOnly = true)
@@ -187,9 +188,16 @@ public class PublicacaoService {
             if (dto.getAno() != null) {
                 predicates.add(criteriaBuilder.equal(criteriaBuilder.function("YEAR", Integer.class, root.get("dataPublicacao")), dto.getAno()));
             }
+
+            // VVV--- CORREÇÃO AQUI: BUSCA POR TERMO NO TÍTULO E NO CONTEÚDO ---VVV
             if (dto.getConteudo() != null && !dto.getConteudo().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("conteudoHtml")), "%" + dto.getConteudo().toLowerCase() + "%"));
+                String termoBusca = "%" + dto.getConteudo().toLowerCase() + "%";
+                Predicate buscaTitulo = criteriaBuilder.like(criteriaBuilder.lower(root.get("titulo")), termoBusca);
+                Predicate buscaConteudo = criteriaBuilder.like(criteriaBuilder.lower(root.get("conteudoHtml")), termoBusca);
+                predicates.add(criteriaBuilder.or(buscaTitulo, buscaConteudo));
             }
+            // ^^^--- FIM DA CORREÇÃO ---^^^
+
             if (dto.getDataInicial() != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dataPublicacao"), dto.getDataInicial()));
             }
@@ -249,32 +257,95 @@ public class PublicacaoService {
         String textoSimples;
 
         if (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf")) {
+            StringBuilder textoCompleto = new StringBuilder();
             try (PDDocument document = PDDocument.load(file.getInputStream())) {
-                PDFTextStripper stripper = new PDFTextStripper();
-                textoSimples = stripper.getText(document);
+                PDFTextStripperByArea stripper = new PDFTextStripperByArea();
+                stripper.setSortByPosition(true);
+
+                for (PDPage page : document.getPages()) {
+                    float width = page.getMediaBox().getWidth();
+                    float height = page.getMediaBox().getHeight();
+
+                    // VVV--- AJUSTE AQUI ---VVV
+                    float margemSuperior = 80; // Espaço a ignorar no topo
+                    float margemInferior = 40;  // Espaço a ignorar na base
+
+                    float y = margemSuperior;
+                    float alturaRegiao = height - (margemSuperior + margemInferior);
+
+                    Rectangle2D.Float region = new Rectangle2D.Float(0, y, width, alturaRegiao);
+                    // ^^^--- FIM DO AJUSTE ---^^^
+
+                    String regionName = "contentArea";
+                    stripper.addRegion(regionName, region);
+
+                    stripper.extractRegions(page);
+                    textoCompleto.append(stripper.getTextForRegion(regionName));
+                }
             }
+            textoSimples = textoCompleto.toString();
+
         } else if (originalFilename != null && (originalFilename.toLowerCase().endsWith(".docx"))) {
-            try (XWPFDocument document = new XWPFDocument(file.getInputStream());
-                 XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
-                textoSimples = extractor.getText();
-            }
+            XWPFDocument document = new XWPFDocument(file.getInputStream());
+            XWPFWordExtractor extractor = new XWPFWordExtractor(document);
+            textoSimples = extractor.getText();
+            extractor.close();
         } else {
             throw new IllegalArgumentException("Formato de arquivo não suportado.");
         }
+
         return converterTextoParaHtml(textoSimples);
     }
 
     private String converterTextoParaHtml(String textoSimples) {
-        if (textoSimples == null || textoSimples.trim().isEmpty()) return "";
+        if (textoSimples == null || textoSimples.trim().isEmpty()) {
+            return "";
+        }
 
         String[] lines = textoSimples.split("\\r?\\n");
-        StringBuilder htmlResult = new StringBuilder();
-        for (String line : lines) {
-            String trimmedLine = line.trim();
-            if (!trimmedLine.isEmpty()) {
-                htmlResult.append("<p>").append(trimmedLine).append("</p>");
+        List<String> rawParagraphs = new ArrayList<>();
+        StringBuilder paragraphBuilder = new StringBuilder();
+
+        for (int i = 0; i < lines.length; i++) {
+            String trimmedLine = lines[i].trim();
+            if (trimmedLine.isEmpty()) {
+                if (paragraphBuilder.length() > 0) {
+                    rawParagraphs.add(paragraphBuilder.toString().trim());
+                    paragraphBuilder.setLength(0);
+                }
+                continue;
+            }
+            paragraphBuilder.append(trimmedLine).append(" ");
+
+            boolean endsWithPunctuation = trimmedLine.endsWith(".") || trimmedLine.endsWith(":") || trimmedLine.endsWith(";");
+            boolean nextLineIsNewSection = false;
+            if (i + 1 < lines.length) {
+                String nextLine = lines[i + 1].trim();
+                if (nextLine.startsWith("Art.") || nextLine.startsWith("§") || nextLine.startsWith("Inc.")) {
+                    nextLineIsNewSection = true;
+                }
+            }
+
+            if (endsWithPunctuation || nextLineIsNewSection) {
+                if (paragraphBuilder.length() > 0) {
+                    rawParagraphs.add(paragraphBuilder.toString().trim());
+                    paragraphBuilder.setLength(0);
+                }
             }
         }
+        if (paragraphBuilder.length() > 0) {
+            rawParagraphs.add(paragraphBuilder.toString().trim());
+        }
+
+        StringBuilder htmlResult = new StringBuilder();
+
+        for (String paragraph : rawParagraphs) {
+            String cleanedParagraph = paragraph.trim();
+            if (!cleanedParagraph.isEmpty()) {
+                htmlResult.append("<p>").append(cleanedParagraph).append("</p>");
+            }
+        }
+
         return htmlResult.toString();
     }
 }

@@ -5,11 +5,11 @@ function HomePage() {
   const [publicacoes, setPublicacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Estado para todos os campos do filtro
-  const [filters, setFilters] = useState({
+  // Inicializa o estado dos filtros a partir dos parâmetros da URL
+  const [filtros, setFiltros] = useState({
     numero: searchParams.get('numero') || '',
     conteudo: searchParams.get('conteudo') || '',
     ano: searchParams.get('ano') || '',
@@ -20,99 +20,104 @@ function HomePage() {
   useEffect(() => {
     const fetchPublicacoes = () => {
       setLoading(true);
-      
-      // Constrói a URL com base nos searchParams atuais
-      const params = new URLSearchParams(searchParams);
-      const url = `http://localhost:8080/api/publicacoes?${params.toString()}`;
-      
+      // Usa os searchParams diretamente para construir a URL, garantindo consistência
+      const url = `http://localhost:8080/api/publicacoes/busca?${searchParams.toString()}`;
+
       fetch(url)
         .then(response => {
-          if (!response.ok) throw new Error('Falha ao buscar publicações.');
+          if (!response.ok) {
+            throw new Error('Falha ao buscar publicações.');
+          }
           return response.json();
         })
         .then(data => {
           setPublicacoes(data);
           setError(null);
         })
-        .catch(err => setError(err.message))
-        .finally(() => setLoading(false));
+        .catch(err => {
+          setError(err.message);
+          setPublicacoes([]);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     fetchPublicacoes();
-  }, [searchParams]); // Re-executa a busca sempre que os parâmetros da URL mudam
+  }, [searchParams]);
 
-  const handleFilterChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFiltros(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSearch = (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    const newParams = new URLSearchParams();
-    // Adiciona apenas os filtros que têm valor
-    Object.entries(filters).forEach(([key, value]) => {
+    const newSearchParams = new URLSearchParams();
+    Object.entries(filtros).forEach(([key, value]) => {
       if (value) {
-        newParams.set(key, value);
+        newSearchParams.set(key, value);
       }
     });
-    setSearchParams(newParams);
+    setSearchParams(newSearchParams);
   };
-
-  const clearFilters = () => {
-    setFilters({ numero: '', conteudo: '', ano: '', dataInicial: '', dataFinal: '' });
+  
+  const handleClearFilters = () => {
+    setFiltros({
+      numero: '',
+      conteudo: '',
+      ano: '',
+      dataInicial: '',
+      dataFinal: '',
+    });
     setSearchParams({});
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    // Adiciona o fuso horário para corrigir a exibição
-    return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR');
-  };
 
   return (
     <div>
-      <div className="filter-panel">
-        <form onSubmit={handleSearch} className="filter-form">
-          <div className="form-row">
+      <h2>Consulta de Publicações</h2>
+
+      {/* VVV--- NOVO CONTAINER PARA O LAYOUT DE DUAS COLUNAS ---VVV */}
+      <div className="home-container">
+        <div className="filter-panel">
+          <form onSubmit={handleFormSubmit} className="filter-form">
             <div className="form-group-filter">
               <label htmlFor="numero">Número do Ato</label>
-              <input type="text" id="numero" name="numero" value={filters.numero} onChange={handleFilterChange} placeholder="Ex: 001/2025"/>
+              <input type="text" name="numero" id="numero" value={filtros.numero} onChange={handleInputChange} />
             </div>
             <div className="form-group-filter">
-              <label htmlFor="conteudo">Termo para busca</label>
-              <input type="text" id="conteudo" name="conteudo" value={filters.conteudo} onChange={handleFilterChange} placeholder="Busca no conteúdo do texto"/>
+              <label htmlFor="conteudo">Termo de Busca</label>
+              <input type="text" name="conteudo" id="conteudo" value={filtros.conteudo} onChange={handleInputChange} />
             </div>
             <div className="form-group-filter">
-              <label htmlFor="ano">Ano</label>
-              <input type="number" id="ano" name="ano" value={filters.ano} onChange={handleFilterChange} placeholder="Ex: 2024"/>
+              <label htmlFor="ano">Ano de Publicação</label>
+              <input type="number" name="ano" id="ano" value={filtros.ano} onChange={handleInputChange} />
             </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group-filter">
-              <label htmlFor="dataInicial">Período de Publicação (Início)</label>
-              <input type="date" id="dataInicial" name="dataInicial" value={filters.dataInicial} onChange={handleFilterChange} />
+            <div className="form-row">
+              <div className="form-group-filter">
+                <label htmlFor="dataInicial">Período - De</label>
+                <input type="date" name="dataInicial" id="dataInicial" value={filtros.dataInicial} onChange={handleInputChange} />
+              </div>
+              <div className="form-group-filter">
+                <label htmlFor="dataFinal">Até</label>
+                <input type="date" name="dataFinal" id="dataFinal" value={filtros.dataFinal} onChange={handleInputChange} />
+              </div>
             </div>
-            <div className="form-group-filter">
-              <label htmlFor="dataFinal">Período de Publicação (Fim)</label>
-              <input type="date" id="dataFinal" name="dataFinal" value={filters.dataFinal} onChange={handleFilterChange} />
+            <div className="form-actions-filter">
+              <button type="submit" className="filter-button">Buscar</button>
+              <button type="button" className="clear-button" onClick={handleClearFilters}>Limpar Filtros</button>
             </div>
-          </div>
-          <div className="form-actions-filter">
-            <button type="submit" className="filter-button">Filtrar</button>
-            <button type="button" className="clear-button" onClick={clearFilters}>Limpar Filtros</button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
 
-      <h2>Publicações</h2>
-      {loading && <p>A carregar publicações...</p>}
-      {error && <p style={{ color: 'red' }}>Erro: {error}</p>}
-      {!loading && !error && (
         <div className="lista-publicacoes">
-          {publicacoes.length === 0 ? (
+          {loading && <p>A carregar publicações...</p>}
+          {error && <p style={{ color: 'red' }}>Erro: {error}</p>}
+          {!loading && !error && publicacoes.length === 0 && (
             <p>Nenhuma publicação encontrada para os filtros aplicados.</p>
-          ) : (
+          )}
+          {!loading && !error && publicacoes.length > 0 && (
             <ul>
               {publicacoes.map(pub => (
                 <li key={pub.id} className={pub.status === 'REVOGADA' ? 'revogado-item' : ''}>
@@ -122,15 +127,17 @@ function HomePage() {
                   </Link>
                   <div className="pub-details">
                     <span>{pub.tipo} Nº {pub.numero}</span>
-                    <span style={{ margin: '0 8px' }}>|</span> 
-                    <span>{formatDate(pub.dataPublicacao)}</span>
+                    <span style={{ margin: '0 8px' }}>|</span>
+                    <span>
+                      {new Date(pub.dataPublicacao + 'T00:00:00-03:00').toLocaleDateString('pt-BR')}
+                    </span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

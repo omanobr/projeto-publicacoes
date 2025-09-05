@@ -7,9 +7,46 @@
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-top: -1.5rem; /* Ajuste para alinhar com as abas */
-  border-top-left-radius: 0;
 }
+
+/* VVV--- NOVA BARRA DE AÇÕES NO TOPO ---VVV */
+.page-actions-top {
+  display: flex;
+  justify-content: flex-end; /* Alinha os botões à direita */
+  gap: 1rem; /* Espaço entre os botões */
+  margin-bottom: 1.5rem; /* Espaço abaixo dos botões */
+  padding-bottom: 1.5rem; /* Espaço extra e linha separadora */
+  border-bottom: 1px solid #e0e0e0; /* Linha para separar visualmente */
+}
+
+.page-actions-top button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #0056b3;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.page-actions-top button:hover {
+  background-color: #004494;
+}
+
+.page-actions-top button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+.page-actions-top .revoke-button {
+  background-color: #c82333; /* Vermelho para ações importantes/destrutivas */
+}
+.page-actions-top .revoke-button:hover {
+  background-color: #a71d2a;
+}
+/* ^^^--- FIM DA NOVA BARRA DE AÇÕES ---^^^ */
+
 
 .form-group {
   display: flex;
@@ -30,26 +67,7 @@
   font-size: 1rem;
 }
 
-.admin-form button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #8a7e6e;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  align-self: flex-start; /* Alinha o botão à esquerda */
-}
-
-.admin-form button:hover {
-  background-color: #5f4e38;
-}
-
-.admin-form button:disabled {
-  background-color: #a0a0a0;
-  cursor: not-allowed;
-}
+/* Removido o estilo do botão antigo daqui para centralizar no .page-actions-top */
 
 .error-message {
   color: #d32f2f;
@@ -58,28 +76,38 @@
   border-radius: 4px;
   border: 1px solid #d32f2f;
 }
-.trecho-selector {
+
+/* Estilos para as Abas */
+.edit-page-tabs {
   display: flex;
-  gap: 0.5rem;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 1.5rem;
 }
 
-.trecho-selector input {
-  flex-grow: 1;
-  background-color: #f8f9fa; /* Fundo cinza para indicar que é read-only */
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px; /* Alinha com a borda inferior */
+  font-size: 1rem;
 }
 
-/* Estilo para o conteúdo dentro do modal */
+.tab-button.active {
+  border-bottom-color: #0056b3;
+  font-weight: 600;
+  color: #0056b3;
+}
+
 .modal-content {
   border: 1px solid #ddd;
   padding: 1rem;
   border-radius: 4px;
   background-color: #f9f9f9;
-}
-.modal-content:hover {
-  cursor: text; /* Muda o cursor para indicar que o texto é selecionável */
+  cursor: text;
 }
 
-/* Estilos para a área de revisão de texto selecionado no modal */
 .selection-review {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -101,33 +129,3 @@
   color: #495057;
 }
 
-
-/* VVV--- NOVOS ESTILOS PARA AS ABAS ---VVV */
-.edit-page-tabs {
-  display: flex;
-  border-bottom: 1px solid #dee2e6;
-  margin-bottom: 1.5rem;
-}
-
-.tab-button {
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-  border-bottom: 3px solid transparent;
-  font-size: 1rem;
-  color: #000000;
-  transition: all 0.2s ease-in-out;
-}
-
-.tab-button:hover {
-  background-color: #f8f9fa;
-  color: #272c31;
-}
-
-.tab-button.active {
-  border-bottom-color: #000000;
-  color: #000000;
-  font-weight: 600;
-}
-/* ^^^--- FIM DOS NOVOS ESTILOS ---^^^ */

@@ -1,6 +1,10 @@
 package com.pmba.publicacoes.controller;
 
-import com.pmba.publicacoes.dto.*;
+import com.pmba.publicacoes.dto.BuscaPublicacaoDTO;
+import com.pmba.publicacoes.dto.CriacaoPublicacaoDTO;
+import com.pmba.publicacoes.dto.PublicacaoDetailDTO;
+import com.pmba.publicacoes.dto.PublicacaoEditDTO;
+import com.pmba.publicacoes.dto.PublicacaoListDTO;
 import com.pmba.publicacoes.model.Publicacao;
 import com.pmba.publicacoes.service.PublicacaoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,15 +54,10 @@ public class PublicacaoController {
         }
     }
 
-    // VVV--- MÉTODO DE LISTAGEM ATUALIZADO ---VVV
-    @GetMapping
-    public List<PublicacaoListDTO> listarPublicacoes(BuscaPublicacaoDTO filters) {
-        // Se nenhum filtro for passado, busca todos.
-        if (filters.getAno() == null && filters.getConteudo() == null && filters.getNumero() == null && filters.getDataInicial() == null && filters.getDataFinal() == null) {
-            return publicacaoService.findAllAsListDto();
-        }
-        return publicacaoService.searchByFilters(filters);
+    // Endpoint unificado para busca e listagem inicial
+    @GetMapping("/busca")
+    public List<PublicacaoListDTO> buscarPublicacoes(BuscaPublicacaoDTO dto) { // Recebe o DTO com os parâmetros
+        return publicacaoService.searchPublicacoes(dto);
     }
-    // ^^^--- FIM DA ATUALIZAÇÃO ---^^^
-
 }
+

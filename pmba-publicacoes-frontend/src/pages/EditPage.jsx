@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import RichTextEditor from '../components/RichTextEditor.jsx';
-import RevogacaoModal from '../components/RevogacaoModal.jsx';
-import AlteracaoModal from '../components/AlteracaoModal.jsx';
-import VinculosPanel from '../components/VinculosPanel.jsx';
+import RichTextEditor from '../components/RichTextEditor';
+import RevogacaoModal from '../components/RevogacaoModal';
+import AlteracaoModal from '../components/AlteracaoModal';
+import VinculosPanel from '../components/VinculosPanel';
+import ScrollToTopButton from '../components/ScrollToTopButton'; // VVV--- IMPORTAÇÃO ADICIONADA ---VVV
 import './AdminPage.css';
 
 function EditPage() {
@@ -14,7 +15,7 @@ function EditPage() {
     const [erro, setErro] = useState(null);
     const [enviando, setEnviando] = useState(false);
     
-    const [activeTab, setActiveTab] = useState('publicacao'); // 'publicacao' ou 'vinculos'
+    const [activeTab, setActiveTab] = useState('publicacao');
     
     const [isRevogacaoModalOpen, setIsRevogacaoModalOpen] = useState(false);
     const [isAlteracaoModalOpen, setIsAlteracaoModalOpen] = useState(false);
@@ -197,85 +198,86 @@ function EditPage() {
 
     if (loading) return <p>Carregando...</p>;
     if (erro) return <p>Erro: {erro}</p>;
-    if (!formData) return <p>Nenhum dado encontrado para esta publicação.</p>;
+    if (!formData) return <p>Nenhum dado encontrado.</p>;
 
     return (
         <div className="admin-page">
             <Link to="/">&larr; Voltar para a lista</Link>
             <h2>Editar Publicação</h2>
 
+             <div className="page-actions-top">
+                <button type="submit" form="edit-form-id" disabled={enviando}>
+                    {enviando ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+                <button 
+                    type="button" 
+                    className="revoke-button" 
+                    onClick={() => setIsRevogacaoTotalModalOpen(true)}
+                >
+                    Revogar Documento...
+                </button>
+            </div>
+
             <div className="edit-page-tabs">
-                <button
+                <button 
                     className={`tab-button ${activeTab === 'publicacao' ? 'active' : ''}`}
                     onClick={() => setActiveTab('publicacao')}
                 >
                     Publicação
                 </button>
-                <button
+                <button 
                     className={`tab-button ${activeTab === 'vinculos' ? 'active' : ''}`}
                     onClick={() => setActiveTab('vinculos')}
                 >
                     Gestão de Vínculos
                 </button>
             </div>
-
-            {activeTab === 'publicacao' && (
-                <form onSubmit={handleSubmit} className="admin-form">
-                    <div className="form-group">
-                        <label>Título (extraído do editor)</label>
-                        <input type="text" value={formData.titulo} disabled />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="numero">Número</label>
-                      <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
-                    </div>
-                    {/* VVV--- CAMPO DO BGO ADICIONADO AQUI ---VVV */}
-                    <div className="form-group">
-                        <label htmlFor="bgo">BGO (Ex: 232/2025)</label>
-                        <input type="text" id="bgo" name="bgo" value={formData.bgo || ''} onChange={handleChange} />
-                    </div>
-                    {/* ^^^--- FIM DO CAMPO ADICIONADO ---^^^ */}
-                    <div className="form-group">
-                      <label htmlFor="tipo">Tipo</label>
-                      <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
-                        <option value="OFICIO">Ofício</option>
-                        <option value="PORTARIA">Portaria</option>
-                        <option value="DESPACHO">Despacho</option>
-                        <option value="BCG">BCG</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="dataPublicacao">Data de Publicação</label>
-                      <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Conteúdo</label>
-                        <RichTextEditor
-                            content={formData.conteudoHtml}
-                            onContentChange={handleContentChange}
-                            onEditorInstance={handleEditorInstance}
-                            onRevogarClick={handleRevogarTrechoClick}
-                            onAlterarClick={handleAlterarTrechoClick}
-                        />
-                    </div>
-                    {erro && <p className="error-message">{erro}</p>}
-                    <div className="form-actions">
-                        <button type="submit" disabled={enviando}>
-                            {enviando ? 'Salvando...' : 'Salvar Alterações'}
-                        </button>
-                        <button 
-                            type="button" 
-                            className="revoke-button" 
-                            onClick={() => setIsRevogacaoTotalModalOpen(true)}
-                        >
-                            Revogar Documento...
-                        </button>
-                    </div>
-                </form>
-            )}
+            
+            <form onSubmit={handleSubmit} className="admin-form" id="edit-form-id">
+                {activeTab === 'publicacao' && (
+                    <>
+                        <div className="form-group">
+                            <label>Título (extraído do editor)</label>
+                            <input type="text" value={formData.titulo} disabled />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="numero">Número</label>
+                          <input type="text" id="numero" name="numero" value={formData.numero} onChange={handleChange} required />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="bgo">BGO (Ex: 232/2025)</label>
+                          <input type="text" id="bgo" name="bgo" value={formData.bgo || ''} onChange={handleChange} />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="tipo">Tipo</label>
+                          <select id="tipo" name="tipo" value={formData.tipo} onChange={handleChange}>
+                            <option value="OFICIO">Ofício</option>
+                            <option value="PORTARIA">Portaria</option>
+                            <option value="DESPACHO">Despacho</option>
+                            <option value="BCG">BCG</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="dataPublicacao">Data de Publicação</label>
+                          <input type="date" id="dataPublicacao" name="dataPublicacao" value={formData.dataPublicacao} onChange={handleChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label>Conteúdo</label>
+                            <RichTextEditor
+                                content={formData.conteudoHtml}
+                                onContentChange={handleContentChange}
+                                onEditorInstance={handleEditorInstance}
+                                onRevogarClick={handleRevogarTrechoClick}
+                                onAlterarClick={handleAlterarTrechoClick}
+                            />
+                        </div>
+                        {erro && <p className="error-message">{erro}</p>}
+                    </>
+                )}
+            </form>
 
             {activeTab === 'vinculos' && (
-                <VinculosPanel 
+                 <VinculosPanel 
                     vinculosGerados={formData.vinculosGerados}
                     vinculosRecebidos={formData.vinculosRecebidos}
                     onDeleteVinculo={handleDeleteVinculo}
@@ -298,6 +300,9 @@ function EditPage() {
                 onConfirm={handleConfirmRevogacaoTotal}
                 tipoFixo="REVOGA"
             />
+
+            {/* VVV--- BOTÃO ADICIONADO AQUI ---VVV */}
+            <ScrollToTopButton />
         </div>
     );
 }

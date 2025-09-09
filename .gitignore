@@ -4,6 +4,10 @@
 *.war
 *.ear
 
+# outros
+*.rar
+*.zip
+
 # Logs
 *.log
 logs/

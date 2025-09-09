@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Modal from 'react-modal';
-import PublicacaoSearch from './PublicacaoSearch';
+import PublicacaoSearch from './PublicacaoSearch.jsx';
+import '../pages/AdminPage.css';
 
 // Estilos para o modal
 const customStyles = {
@@ -13,18 +14,17 @@ const customStyles = {
     transform: 'translate(-50%, -50%)',
     width: '80%',
     maxWidth: '700px',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    padding: '2rem',
+    height: '90vh',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '0',
   },
 };
 
 Modal.setAppElement('#root');
 
 function AlteracaoModal({ isOpen, onClose, onConfirm }) {
-  const [step, setStep] = useState(1); // 1: Buscar Origem, 2: Selecionar Novo Texto
+  const [step, setStep] = useState(1);
   const [publicacaoOrigem, setPublicacaoOrigem] = useState(null);
   const [conteudoOrigem, setConteudoOrigem] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,21 +44,20 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
     }
   }, [publicacaoOrigem]);
   
-  // VVV--- ESTA FUNÇÃO FOI TOTALMENTE ALTERADA ---VVV
+  // VVV--- FUNÇÃO DE SELEÇÃO CORRIGIDA ---VVV
   const handleSelectionChange = () => {
     const selection = window.getSelection();
+    // Se não houver seleção, limpa o estado
     if (!selection.rangeCount || selection.isCollapsed) {
         setNovoTextoSelecionado('');
         return;
     }
 
-    const range = selection.getRangeAt(0);
-    const container = document.createElement('div');
-    container.appendChild(range.cloneContents());
-
-    // Agora, em vez de texto puro, guardamos o HTML selecionado.
-    setNovoTextoSelecionado(container.innerHTML);
+    // Pega o conteúdo de texto puro da seleção, ignorando o HTML
+    const plainText = selection.toString().trim();
+    setNovoTextoSelecionado(plainText);
   };
+  // ^^^--- FIM DA CORREÇÃO ---^^^
 
   const handleConfirmarClick = () => {
     if (novoTextoSelecionado) {
@@ -80,42 +79,53 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
   return (
     <Modal isOpen={isOpen} onRequestClose={handleClose} style={customStyles}>
       {step === 1 && (
-        <>
+        <div className="modal-content-full">
           <h2>Alterar Trecho: Passo 1/2</h2>
           <p>Encontre a publicação que contém o novo texto (a publicação de origem).</p>
           <PublicacaoSearch onPublicacaoSelect={setPublicacaoOrigem} />
           {loading && <p>A carregar...</p>}
-        </>
+          <button onClick={handleClose} style={{ marginTop: '1rem', backgroundColor: '#6c757d' }}>Cancelar</button>
+        </div>
       )}
       {step === 2 && (
-        <>
-          <h2>Alterar Trecho: Passo 2/2</h2>
-          <p>Agora, selecione o <strong>novo texto</strong> no documento abaixo. O texto aparecerá na área de revisão para confirmação.</p>
+        <div className="modal-layout">
+          <div className="modal-header">
+            <h2>Alterar Trecho: Passo 2/2</h2>
+            <p>Agora, selecione o <strong>novo texto</strong> no documento abaixo. O texto aparecerá na área de revisão para confirmação.</p>
+          </div>
           
-          <div className="modal-content" onMouseUp={handleSelectionChange}>
+          <div className="modal-scrollable-content" onMouseUp={handleSelectionChange}>
             <div dangerouslySetInnerHTML={{ __html: conteudoOrigem }} />
           </div>
 
-          <div className="selection-review">
-            <h4>Texto Selecionado para Revisão:</h4>
-            {/* VVV--- A ÁREA DE REVISÃO AGORA RENDERIZA O HTML ---VVV */}
-            <div 
-              className="selection-box"
-              dangerouslySetInnerHTML={{ __html: novoTextoSelecionado || '<em>Nenhum texto selecionado.</em>' }}
-            />
+          <div className="modal-footer">
+            <div className="selection-review">
+              <h4>Texto Selecionado para Revisão:</h4>
+              {/* VVV--- RENDERIZAÇÃO CORRIGIDA PARA TEXTO PURO ---VVV */}
+              <div className="selection-box">
+                {novoTextoSelecionado ? (
+                  <p style={{ margin: 0 }}>{novoTextoSelecionado}</p>
+                ) : (
+                  <em>Nenhum texto selecionado.</em>
+                )}
+              </div>
+              {/* ^^^--- FIM DA CORREÇÃO ---^^^ */}
+            </div>
+            <div className="modal-actions">
+                <button 
+                    onClick={handleConfirmarClick} 
+                    disabled={!novoTextoSelecionado}
+                >
+                    Confirmar Alteração
+                </button>
+                <button onClick={handleClose} style={{ backgroundColor: '#6c757d' }}>Cancelar</button>
+            </div>
           </div>
-          <button 
-            onClick={handleConfirmarClick} 
-            disabled={!novoTextoSelecionado}
-            style={{ marginTop: '1rem' }}
-          >
-            Confirmar Alteração
-          </button>
-        </>
+        </div>
       )}
-      <button onClick={handleClose} style={{ marginTop: '1rem', marginLeft: '0.5rem', backgroundColor: '#6c757d' }}>Cancelar</button>
     </Modal>
   );
 }
 
 export default AlteracaoModal;
+

@@ -1,15 +1,15 @@
 package com.pmba.publicacoes.dto;
 
 import com.pmba.publicacoes.model.StatusPublicacao;
-import lombok.AllArgsConstructor; // Adicione esta linha
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor; // Adicione esta linha
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor      // Adicione esta anotação
-@AllArgsConstructor     // Adicione esta anotação
+@NoArgsConstructor
+@AllArgsConstructor
 public class PublicacaoListDTO {
     private Long id;
     private String titulo;
@@ -17,4 +17,5 @@ public class PublicacaoListDTO {
     private String tipo;
     private LocalDate dataPublicacao;
     private StatusPublicacao status;
+    private boolean foiAlterada; // VVV--- CAMPO ADICIONADO ---VVV
 }

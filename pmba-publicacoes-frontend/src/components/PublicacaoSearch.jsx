@@ -16,7 +16,7 @@ function PublicacaoSearch({ onPublicacaoSelect }) {
     setHasSearched(true);
 
     // VVV--- CORREÇÃO DO ENDPOINT E DO PARÂMETRO ---VVV
-    const url = `http://localhost:8080/api/publicacoes/busca?conteudo=${encodeURIComponent(searchTerm)}`;
+    const url = `http://localhost:8080/api/publicacoes/busca?termo=${encodeURIComponent(searchTerm)}`;
     
     fetch(url)
       .then(res => {

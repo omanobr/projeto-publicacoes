@@ -16,6 +16,7 @@
 
 .app-header .main-nav {
   display: flex;
+  align-items: center; /* Alinha os itens verticalmente */
   gap: 1.5rem;
 }
 
@@ -25,10 +26,10 @@
   font-weight: 500;
   padding-bottom: 5px;
   border-bottom: 2px solid transparent;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
 }
 
-.app-header .main-nav a:hover {
+.app-header .main-nav a:not(.create-new-button):hover {
   border-color: #4a4a4b;
 }
 
@@ -37,6 +38,21 @@
   color: #0056b3;
   border-color: #0056b3;
 }
+
+/* VVV--- NOVO ESTILO PARA O BOTÃO ---VVV */
+.app-header .main-nav a.create-new-button {
+    background-color: #0056b3;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border-bottom: none; /* Remove a borda inferior para este link */
+}
+
+.app-header .main-nav a.create-new-button:hover {
+    background-color: #004494;
+    transform: translateY(-2px); /* Efeito de elevação */
+}
+/* ^^^--- FIM DO NOVO ESTILO ---^^^ */
 
 .app-header .admin-nav button {
   background-color: #0056b3;

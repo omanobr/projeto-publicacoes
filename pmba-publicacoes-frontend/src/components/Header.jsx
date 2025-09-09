@@ -11,6 +11,11 @@ function Header() {
         <NavLink to="/">Portal de Publicações da PMBA</NavLink>
       </div>
       <nav className="main-nav">
+        {isAdmin && (
+          <NavLink to="/admin" className="create-new-button">
+            Nova Publicação
+          </NavLink>
+        )}
         <NavLink to="/">Publicações</NavLink>
       </nav>
       <div className="admin-nav">

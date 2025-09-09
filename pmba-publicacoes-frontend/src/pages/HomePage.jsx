@@ -7,21 +7,33 @@ function HomePage() {
   const [error, setError] = useState(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // Inicializa o estado dos filtros a partir dos parâmetros da URL
   const [filtros, setFiltros] = useState({
     numero: searchParams.get('numero') || '',
-    conteudo: searchParams.get('conteudo') || '',
+    conteudo: searchParams.get('termo') || '',
     ano: searchParams.get('ano') || '',
     dataInicial: searchParams.get('dataInicial') || '',
     dataFinal: searchParams.get('dataFinal') || '',
+    status: searchParams.get('status') || 'TODAS',
   });
 
   useEffect(() => {
     const fetchPublicacoes = () => {
       setLoading(true);
-      // Usa os searchParams diretamente para construir a URL, garantindo consistência
-      const url = `http://localhost:8080/api/publicacoes/busca?${searchParams.toString()}`;
+      
+      const paramsParaBusca = { ...filtros };
+      if (paramsParaBusca.status === 'TODAS') {
+        delete paramsParaBusca.status;
+      }
+
+      const params = new URLSearchParams(paramsParaBusca);
+      Object.keys(paramsParaBusca).forEach(key => {
+        if (!paramsParaBusca[key]) {
+          params.delete(key);
+        }
+      });
+      
+      const queryString = params.toString();
+      const url = `http://localhost:8080/api/publicacoes/busca?${queryString}`;
 
       fetch(url)
         .then(response => {
@@ -51,92 +63,89 @@ function HomePage() {
     setFiltros(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
-    const newSearchParams = new URLSearchParams();
-    Object.entries(filtros).forEach(([key, value]) => {
-      if (value) {
-        newSearchParams.set(key, value);
-      }
-    });
-    setSearchParams(newSearchParams);
+    setSearchParams(filtros);
   };
-  
-  const handleClearFilters = () => {
-    setFiltros({
+
+  const handleClear = () => {
+    const clearedFiltros = {
       numero: '',
       conteudo: '',
       ano: '',
       dataInicial: '',
       dataFinal: '',
-    });
+      status: 'TODAS',
+    };
+    setFiltros(clearedFiltros);
     setSearchParams({});
   };
 
-
   return (
-    <div>
-      <h2>Consulta de Publicações</h2>
+    <div className="homepage-layout">
+      <div className="filter-panel">
+        <h2>Filtros</h2>
+        <form onSubmit={handleSearch} className="filter-form">
+          <div className="form-group-filter">
+            <label htmlFor="numero">Número do Ato</label>
+            <input type="text" id="numero" name="numero" value={filtros.numero} onChange={handleInputChange} placeholder="Ex: 001/2025" />
+          </div>
 
-      {/* VVV--- NOVO CONTAINER PARA O LAYOUT DE DUAS COLUNAS ---VVV */}
-      <div className="home-container">
-        <div className="filter-panel">
-          <form onSubmit={handleFormSubmit} className="filter-form">
-            <div className="form-group-filter">
-              <label htmlFor="numero">Número do Ato</label>
-              <input type="text" name="numero" id="numero" value={filtros.numero} onChange={handleInputChange} />
-            </div>
-            <div className="form-group-filter">
-              <label htmlFor="conteudo">Termo de Busca</label>
-              <input type="text" name="conteudo" id="conteudo" value={filtros.conteudo} onChange={handleInputChange} />
-            </div>
-            <div className="form-group-filter">
-              <label htmlFor="ano">Ano de Publicação</label>
-              <input type="number" name="ano" id="ano" value={filtros.ano} onChange={handleInputChange} />
-            </div>
-            <div className="form-row">
-              <div className="form-group-filter">
-                <label htmlFor="dataInicial">Período - De</label>
-                <input type="date" name="dataInicial" id="dataInicial" value={filtros.dataInicial} onChange={handleInputChange} />
-              </div>
-              <div className="form-group-filter">
-                <label htmlFor="dataFinal">Até</label>
-                <input type="date" name="dataFinal" id="dataFinal" value={filtros.dataFinal} onChange={handleInputChange} />
-              </div>
-            </div>
-            <div className="form-actions-filter">
-              <button type="submit" className="filter-button">Buscar</button>
-              <button type="button" className="clear-button" onClick={handleClearFilters}>Limpar Filtros</button>
-            </div>
-          </form>
-        </div>
+          <div className="form-group-filter">
+            <label htmlFor="termo">Termo ou Título</label>
+            <input type="text" id="termo" name="termo" value={filtros.termo} onChange={handleInputChange} placeholder="Busca no título e conteúdo" />
+          </div>
 
-        <div className="lista-publicacoes">
-          {loading && <p>A carregar publicações...</p>}
-          {error && <p style={{ color: 'red' }}>Erro: {error}</p>}
-          {!loading && !error && publicacoes.length === 0 && (
-            <p>Nenhuma publicação encontrada para os filtros aplicados.</p>
-          )}
-          {!loading && !error && publicacoes.length > 0 && (
-            <ul>
-              {publicacoes.map(pub => (
-                <li key={pub.id} className={pub.status === 'REVOGADA' ? 'revogado-item' : ''}>
-                  <Link to={`/publicacao/${pub.id}`}>
-                    {pub.titulo}
-                    {pub.status === 'REVOGADA' && <span className="status-tag revogado">REVOGADO</span>}
-                  </Link>
-                  <div className="pub-details">
-                    <span>{pub.tipo} Nº {pub.numero}</span>
-                    <span style={{ margin: '0 8px' }}>|</span>
-                    <span>
-                      {new Date(pub.dataPublicacao + 'T00:00:00-03:00').toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          <div className="form-group-filter">
+            <label htmlFor="ano">Ano da Publicação</label>
+            <input type="number" id="ano" name="ano" value={filtros.ano} onChange={handleInputChange} placeholder="Ex: 2024" />
+          </div>
+          
+          <div className="form-group-filter">
+            <label htmlFor="status">Situação</label>
+            <select id="status" name="status" value={filtros.status} onChange={handleInputChange}>
+                <option value="TODAS">Todas</option>
+                <option value="ATIVA">Ativas</option>
+                <option value="REVOGADA">Revogadas</option>
+            </select>
+          </div>
+
+          <div className="form-group-filter">
+            <label>Período de Publicação</label>
+            <input type="date" id="dataInicial" name="dataInicial" value={filtros.dataInicial} onChange={handleInputChange} />
+            <span style={{textAlign: 'center', margin: '0.25rem 0'}}>até</span>
+            <input type="date" id="dataFinal" name="dataFinal" value={filtros.dataFinal} onChange={handleInputChange} />
+          </div>
+
+          <div className="form-actions-filter">
+            <button type="submit" className="filter-button">Buscar</button>
+            <button type="button" onClick={handleClear} className="clear-button">Limpar Filtros</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="lista-publicacoes">
+        <h2>Publicações</h2>
+        {loading && <p>A carregar publicações...</p>}
+        {error && <p style={{ color: 'red' }}>Erro: {error}</p>}
+        {!loading && !error && publicacoes.length === 0 && <p>Nenhuma publicação encontrada.</p>}
+        
+        <ul>
+          {publicacoes.map(pub => (
+            <li key={pub.id} className={pub.status === 'REVOGADA' ? 'revogado-item' : ''}>
+              <Link to={`/publicacao/${pub.id}`}>
+                {pub.titulo}
+                {pub.status === 'REVOGADA' && <span className="status-tag revogado">REVOGADO</span>}
+                {pub.foiAlterada && pub.status === 'ATIVA' && <span className="status-tag alterada">ALTERADA</span>}
+              </Link>
+              <div className="pub-details">
+                <span>{pub.tipo} Nº {pub.numero}</span>
+                <span style={{ margin: '0 8px' }}>|</span> 
+                <span>{new Date(pub.dataPublicacao + 'T00:00:00-03:00').toLocaleDateString()}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

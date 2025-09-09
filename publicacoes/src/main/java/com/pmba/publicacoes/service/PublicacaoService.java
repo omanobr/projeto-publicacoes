@@ -2,6 +2,7 @@ package com.pmba.publicacoes.service;
 
 import com.pmba.publicacoes.dto.*;
 import com.pmba.publicacoes.model.Publicacao;
+import com.pmba.publicacoes.model.StatusPublicacao;
 import com.pmba.publicacoes.model.TipoVinculo;
 import com.pmba.publicacoes.model.VinculoNormativo;
 import com.pmba.publicacoes.repository.PublicacaoRepository;
@@ -18,23 +19,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-import java.util.function.Function;
-
-
-import java.io.IOException;
-import java.util.stream.Stream;
 
 @Service
 public class PublicacaoService {
@@ -54,7 +48,13 @@ public class PublicacaoService {
         Document doc = Jsoup.parse(htmlRecebido);
         Element tituloElement = doc.selectFirst("span[data-meta=titulo]");
 
-        String tituloFinal = (tituloElement != null) ? tituloElement.text() : "Título não definido";
+        String tituloFinal;
+        if (tituloElement != null) {
+            tituloFinal = tituloElement.text();
+        } else {
+            tituloFinal = "Título não definido";
+        }
+
         String sanitizedHtml = Jsoup.clean(htmlRecebido, safelistConfigurado());
 
         publicacaoRepository.criarNovaPublicacao(
@@ -84,24 +84,30 @@ public class PublicacaoService {
         publicacaoParaSalvar.setConteudoHtml(sanitizedHtml);
         publicacaoParaSalvar.setBgo(dadosRecebidos.getBgo());
         Publicacao salvo = publicacaoRepository.save(publicacaoParaSalvar);
-        return convertToDetailDto(salvo, Collections.emptyList());
+        return convertToDetailDto(salvo);
     }
 
     @Transactional(readOnly = true)
     public PublicacaoDetailDTO findByIdProcessado(Long id) {
         Publicacao publicacao = publicacaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Publicação não encontrada com id: " + id));
+        PublicacaoDetailDTO dto = convertToDetailDto(publicacao);
 
-        Hibernate.initialize(publicacao.getVinculosGerados());
         List<VinculoNormativo> vinculosRecebidos = vinculoRepository.findAllByPublicacaoDestinoId(id);
+        List<VinculoNormativo> vinculosGerados = vinculoRepository.findAllByPublicacaoOrigemId(id);
 
-        Set<VinculoPublicacaoInfoDTO> publicacoesVinculadas = Stream.concat(
-                publicacao.getVinculosGerados().stream().map(v -> new VinculoPublicacaoInfoDTO(v.getPublicacaoDestino().getId(), v.getPublicacaoDestino().getTitulo())),
-                vinculosRecebidos.stream().map(v -> new VinculoPublicacaoInfoDTO(v.getPublicacaoOrigem().getId(), v.getPublicacaoOrigem().getTitulo()))
-        ).collect(Collectors.toSet());
+        Set<VinculoPublicacaoInfoDTO> publicacoesVinculadas = new HashSet<>();
 
-        PublicacaoDetailDTO dto = convertToDetailDto(publicacao, new ArrayList<>(publicacoesVinculadas));
-        String conteudoProcessado = processarVinculos(publicacao, false, vinculosRecebidos);
+        for (VinculoNormativo vinculo : vinculosRecebidos) {
+            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(vinculo.getPublicacaoOrigem().getId(), vinculo.getPublicacaoOrigem().getTitulo()));
+        }
+        for (VinculoNormativo vinculo : vinculosGerados) {
+            publicacoesVinculadas.add(new VinculoPublicacaoInfoDTO(vinculo.getPublicacaoDestino().getId(), vinculo.getPublicacaoDestino().getTitulo()));
+        }
+
+        dto.setPublicacoesVinculadas(new ArrayList<>(publicacoesVinculadas));
+
+        String conteudoProcessado = processarVinculos(publicacao);
         dto.setConteudoHtml(conteudoProcessado);
         return dto;
     }
@@ -112,7 +118,6 @@ public class PublicacaoService {
                 .orElseThrow(() -> new RuntimeException("Publicação não encontrada com id: " + id));
 
         Hibernate.initialize(publicacao.getVinculosGerados());
-        List<VinculoNormativo> vinculosRecebidosEntities = vinculoRepository.findAllByPublicacaoDestinoId(id);
 
         PublicacaoEditDTO dto = new PublicacaoEditDTO();
         dto.setId(publicacao.getId());
@@ -122,96 +127,111 @@ public class PublicacaoService {
         dto.setDataPublicacao(publicacao.getDataPublicacao());
         dto.setStatus(publicacao.getStatus());
         dto.setBgo(publicacao.getBgo());
-
-        String conteudoParaEdicao = processarVinculos(publicacao, true, vinculosRecebidosEntities);
-        dto.setConteudoHtml(conteudoParaEdicao);
-
-        dto.setVinculosGerados(publicacao.getVinculosGerados().stream()
+        dto.setConteudoHtml(publicacao.getConteudoHtml());
+        List<VinculoSimpleDTO> vinculosGerados = publicacao.getVinculosGerados().stream()
                 .map(this::convertVinculoToSimpleDto)
-                .collect(Collectors.toList()));
-
-        dto.setVinculosRecebidos(vinculosRecebidosEntities.stream()
+                .collect(Collectors.toList());
+        dto.setVinculosGerados(vinculosGerados);
+        List<VinculoNormativo> vinculosRecebidosEntities = vinculoRepository.findAllByPublicacaoDestinoId(id);
+        List<VinculoSimpleDTO> vinculosRecebidos = vinculosRecebidosEntities.stream()
                 .map(this::convertVinculoToSimpleDto)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+        dto.setVinculosRecebidos(vinculosRecebidos);
         return dto;
     }
 
-    private String processarVinculos(Publicacao publicacao, boolean paraEdicao, List<VinculoNormativo> vinculosRecebidos) {
-        Document doc = Jsoup.parse(publicacao.getConteudoHtml());
+    private String processarVinculos(Publicacao publicacao) {
+        String conteudoOriginal = publicacao.getConteudoHtml();
+        Document doc = Jsoup.parse(conteudoOriginal);
+
+        List<VinculoNormativo> vinculosRecebidos = vinculoRepository.findAllByPublicacaoDestinoId(publicacao.getId());
 
         for (VinculoNormativo vinculo : vinculosRecebidos) {
-            TipoVinculo tipo = vinculo.getTipoVinculo();
-            String textoOriginal = vinculo.getTextoDoTrecho();
-            String textoNovo = vinculo.getTextoNovo();
+            if (vinculo.getTipoVinculo() == TipoVinculo.ALTERA && vinculo.getTextoNovo() != null) {
 
-            if (tipo == TipoVinculo.REVOGA_PARCIALMENTE && textoOriginal != null) {
-                String spanRevogado = String.format(
-                        "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Trecho revogado pela Publicação %s\"><del>%s</del></a>",
-                        vinculo.getPublicacaoOrigem().getId(),
-                        vinculo.getPublicacaoOrigem().getNumero(),
-                        textoOriginal
-                );
-                String htmlDoc = doc.html().replace(textoOriginal, spanRevogado);
-                doc = Jsoup.parse(htmlDoc);
-            }
+                List<Element> elements = doc.select(":containsOwn(" + vinculo.getTextoNovo() + ")");
+                Element p = elements.stream()
+                        .filter(el -> el.tagName().equals("p"))
+                        .findFirst()
+                        .orElse(null);
 
-            if (tipo == TipoVinculo.ALTERA && textoNovo != null && !paraEdicao) {
-                for (Element p : doc.select("p, span, div")) {
-                    if (p.text().contains(textoNovo)) {
-                        String anotacaoHtml = String.format(
-                                "<div class=\"anotacao-alteracao\">" +
-                                        "  <p>Alterado pela <a href=\"/publicacao/%d\">Publicação nº %s</a>.</p>" +
-                                        "  <p><strong>Redação original:</strong> \"%s\"</p>" +
-                                        "</div>",
-                                vinculo.getPublicacaoOrigem().getId(),
-                                vinculo.getPublicacaoOrigem().getNumero(),
-                                textoOriginal
-                        );
-                        p.after(anotacaoHtml);
-                        break;
-                    }
+                if (p != null) {
+                    String anotacaoHtml = String.format(
+                            "<div class=\"anotacao-alteracao\">" +
+                                    "Alterado pela Publicação <a href=\"/publicacao/%d\">%s</a>.<br>" +
+                                    "Redação original: \"%s\"" +
+                                    "</div>",
+                            vinculo.getPublicacaoOrigem().getId(),
+                            vinculo.getPublicacaoOrigem().getNumero(),
+                            vinculo.getTextoDoTrecho()
+                    );
+                    p.after(anotacaoHtml);
+                }
+            } else if (vinculo.getTipoVinculo() == TipoVinculo.REVOGA_PARCIALMENTE) {
+                String textoOriginal = vinculo.getTextoDoTrecho();
+                if (textoOriginal != null && !textoOriginal.isEmpty()) {
+                    String linkRevogacao = String.format(
+                            "<a href=\"/publicacao/%d\" class=\"trecho-revogado\" data-vinculo-info=\"Revogado pela Publicação %s\">" +
+                                    "<del>%s</del>" +
+                                    "</a>",
+                            vinculo.getPublicacaoOrigem().getId(),
+                            vinculo.getPublicacaoOrigem().getNumero(),
+                            textoOriginal
+                    );
+                    doc.body().html(doc.body().html().replace(textoOriginal, linkRevogacao));
                 }
             }
         }
-
         return doc.body().html();
     }
 
     @Transactional(readOnly = true)
-    public List<PublicacaoListDTO> searchPublicacoes(BuscaPublicacaoDTO dto) {
-        Specification<Publicacao> spec = (root, query, criteriaBuilder) -> {
+    public List<PublicacaoListDTO> searchPublicacoes(BuscaPublicacaoDTO buscaDTO) {
+        Specification<Publicacao> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (dto.getNumero() != null && !dto.getNumero().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numero")), "%" + dto.getNumero().toLowerCase() + "%"));
+            if (buscaDTO.getNumero() != null && !buscaDTO.getNumero().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("numero")), "%" + buscaDTO.getNumero().toLowerCase() + "%"));
             }
-            if (dto.getAno() != null) {
-                predicates.add(criteriaBuilder.equal(criteriaBuilder.function("YEAR", Integer.class, root.get("dataPublicacao")), dto.getAno()));
+            if (buscaDTO.getTermo() != null && !buscaDTO.getTermo().isEmpty()) {
+                Predicate tituloLike = cb.like(cb.lower(root.get("titulo")), "%" + buscaDTO.getTermo().toLowerCase() + "%");
+                Predicate conteudoLike = cb.like(cb.lower(root.get("conteudoHtml")), "%" + buscaDTO.getTermo().toLowerCase() + "%");
+                predicates.add(cb.or(tituloLike, conteudoLike));
+            }
+            if (buscaDTO.getAno() != null) {
+                predicates.add(cb.equal(cb.function("date_part", Integer.class, cb.literal("year"), root.get("dataPublicacao")), buscaDTO.getAno()));
+            }
+            if (buscaDTO.getDataInicial() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dataPublicacao"), buscaDTO.getDataInicial()));
+            }
+            if (buscaDTO.getDataFinal() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dataPublicacao"), buscaDTO.getDataFinal()));
+            }
+            if (buscaDTO.getStatus() != null) {
+                predicates.add(cb.equal(root.get("status"), buscaDTO.getStatus()));
             }
 
-            // VVV--- CORREÇÃO AQUI: BUSCA POR TERMO NO TÍTULO E NO CONTEÚDO ---VVV
-            if (dto.getConteudo() != null && !dto.getConteudo().isEmpty()) {
-                String termoBusca = "%" + dto.getConteudo().toLowerCase() + "%";
-                Predicate buscaTitulo = criteriaBuilder.like(criteriaBuilder.lower(root.get("titulo")), termoBusca);
-                Predicate buscaConteudo = criteriaBuilder.like(criteriaBuilder.lower(root.get("conteudoHtml")), termoBusca);
-                predicates.add(criteriaBuilder.or(buscaTitulo, buscaConteudo));
-            }
-            // ^^^--- FIM DA CORREÇÃO ---^^^
-
-            if (dto.getDataInicial() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dataPublicacao"), dto.getDataInicial()));
-            }
-            if (dto.getDataFinal() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dataPublicacao"), dto.getDataFinal()));
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "dataPublicacao", "id");
+        List<Publicacao> publicacoes = publicacaoRepository.findAll(spec);
 
-        List<Publicacao> publicacoes = publicacaoRepository.findAll(spec, sort);
+        if (publicacoes.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> publicacaoIds = publicacoes.stream().map(Publicacao::getId).collect(Collectors.toList());
+        Set<Long> idsPublicacoesAlteradas = vinculoRepository.findAlteredDestinoIds(publicacaoIds, Set.of(TipoVinculo.ALTERA, TipoVinculo.REVOGA_PARCIALMENTE));
+
         return publicacoes.stream()
-                .map(this::convertToListDto)
+                .map(pub -> {
+                    PublicacaoListDTO dto = convertToListDto(pub);
+                    if (dto.getStatus() == StatusPublicacao.ATIVA && idsPublicacoesAlteradas.contains(pub.getId())) {
+                        dto.setFoiAlterada(true);
+                    }
+                    return dto;
+                })
+                .sorted(Comparator.comparing(PublicacaoListDTO::getDataPublicacao).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -227,7 +247,7 @@ public class PublicacaoService {
         return dto;
     }
 
-    private PublicacaoDetailDTO convertToDetailDto(Publicacao publicacao, List<VinculoPublicacaoInfoDTO> publicacoesVinculadas) {
+    private PublicacaoDetailDTO convertToDetailDto(Publicacao publicacao) {
         PublicacaoDetailDTO dto = new PublicacaoDetailDTO();
         dto.setId(publicacao.getId());
         dto.setTitulo(publicacao.getTitulo());
@@ -237,19 +257,18 @@ public class PublicacaoService {
         dto.setConteudoHtml(publicacao.getConteudoHtml());
         dto.setStatus(publicacao.getStatus());
         dto.setBgo(publicacao.getBgo());
-        dto.setPublicacoesVinculadas(publicacoesVinculadas);
         return dto;
     }
 
     private PublicacaoListDTO convertToListDto(Publicacao publicacao) {
-        return new PublicacaoListDTO(
-                publicacao.getId(),
-                publicacao.getTitulo(),
-                publicacao.getNumero(),
-                publicacao.getTipo(),
-                publicacao.getDataPublicacao(),
-                publicacao.getStatus()
-        );
+        PublicacaoListDTO dto = new PublicacaoListDTO();
+        dto.setId(publicacao.getId());
+        dto.setTitulo(publicacao.getTitulo());
+        dto.setNumero(publicacao.getNumero());
+        dto.setTipo(publicacao.getTipo());
+        dto.setDataPublicacao(publicacao.getDataPublicacao());
+        dto.setStatus(publicacao.getStatus());
+        return dto;
     }
 
     public String extrairTextoDeArquivo(MultipartFile file) throws IOException {
@@ -258,32 +277,25 @@ public class PublicacaoService {
 
         if (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf")) {
             StringBuilder textoCompleto = new StringBuilder();
-            try (PDDocument document = PDDocument.load(file.getInputStream())) {
+            PDDocument document = PDDocument.load(file.getInputStream());
+            float margemSuperior = 80;
+            float margemInferior = 40;
+
+            for (int i = 0; i < document.getNumberOfPages(); i++) {
+                PDPage page = document.getPage(i);
+                float width = page.getMediaBox().getWidth();
+                float height = page.getMediaBox().getHeight();
+
+                float alturaRegiao = height - margemSuperior - margemInferior;
+
                 PDFTextStripperByArea stripper = new PDFTextStripperByArea();
-                stripper.setSortByPosition(true);
-
-                for (PDPage page : document.getPages()) {
-                    float width = page.getMediaBox().getWidth();
-                    float height = page.getMediaBox().getHeight();
-
-                    // VVV--- AJUSTE AQUI ---VVV
-                    float margemSuperior = 80; // Espaço a ignorar no topo
-                    float margemInferior = 40;  // Espaço a ignorar na base
-
-                    float y = margemSuperior;
-                    float alturaRegiao = height - (margemSuperior + margemInferior);
-
-                    Rectangle2D.Float region = new Rectangle2D.Float(0, y, width, alturaRegiao);
-                    // ^^^--- FIM DO AJUSTE ---^^^
-
-                    String regionName = "contentArea";
-                    stripper.addRegion(regionName, region);
-
-                    stripper.extractRegions(page);
-                    textoCompleto.append(stripper.getTextForRegion(regionName));
-                }
+                Rectangle2D.Float region = new Rectangle2D.Float(0, margemSuperior, width, alturaRegiao);
+                stripper.addRegion("content", region);
+                stripper.extractRegions(page);
+                textoCompleto.append(stripper.getTextForRegion("content"));
             }
             textoSimples = textoCompleto.toString();
+            document.close();
 
         } else if (originalFilename != null && (originalFilename.toLowerCase().endsWith(".docx"))) {
             XWPFDocument document = new XWPFDocument(file.getInputStream());
@@ -293,7 +305,6 @@ public class PublicacaoService {
         } else {
             throw new IllegalArgumentException("Formato de arquivo não suportado.");
         }
-
         return converterTextoParaHtml(textoSimples);
     }
 
@@ -315,7 +326,6 @@ public class PublicacaoService {
                 }
                 continue;
             }
-            paragraphBuilder.append(trimmedLine).append(" ");
 
             boolean endsWithPunctuation = trimmedLine.endsWith(".") || trimmedLine.endsWith(":") || trimmedLine.endsWith(";");
             boolean nextLineIsNewSection = false;
@@ -325,6 +335,8 @@ public class PublicacaoService {
                     nextLineIsNewSection = true;
                 }
             }
+
+            paragraphBuilder.append(trimmedLine).append(" ");
 
             if (endsWithPunctuation || nextLineIsNewSection) {
                 if (paragraphBuilder.length() > 0) {
@@ -338,11 +350,9 @@ public class PublicacaoService {
         }
 
         StringBuilder htmlResult = new StringBuilder();
-
         for (String paragraph : rawParagraphs) {
-            String cleanedParagraph = paragraph.trim();
-            if (!cleanedParagraph.isEmpty()) {
-                htmlResult.append("<p>").append(cleanedParagraph).append("</p>");
+            if (!paragraph.isEmpty()) {
+                htmlResult.append("<p>").append(paragraph).append("</p>");
             }
         }
 

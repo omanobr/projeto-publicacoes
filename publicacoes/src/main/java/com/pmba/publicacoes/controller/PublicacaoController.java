@@ -1,18 +1,17 @@
 package com.pmba.publicacoes.controller;
 
-import com.pmba.publicacoes.dto.BuscaPublicacaoDTO;
-import com.pmba.publicacoes.dto.CriacaoPublicacaoDTO;
-import com.pmba.publicacoes.dto.PublicacaoDetailDTO;
-import com.pmba.publicacoes.dto.PublicacaoEditDTO;
-import com.pmba.publicacoes.dto.PublicacaoListDTO;
+import com.pmba.publicacoes.dto.*;
 import com.pmba.publicacoes.model.Publicacao;
+import com.pmba.publicacoes.model.StatusPublicacao;
 import com.pmba.publicacoes.service.PublicacaoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -44,6 +43,7 @@ public class PublicacaoController {
         PublicacaoDetailDTO dto = publicacaoService.atualizarComMetadadosExtraidos(id, publicacaoAtualizada);
         return ResponseEntity.ok(dto);
     }
+
     @PostMapping("/upload-extract-text")
     public ResponseEntity<String> extrairTextoDeArquivo(@RequestParam("file") MultipartFile file) {
         try {
@@ -54,9 +54,23 @@ public class PublicacaoController {
         }
     }
 
-    // Endpoint unificado para busca e listagem inicial
     @GetMapping("/busca")
-    public List<PublicacaoListDTO> buscarPublicacoes(BuscaPublicacaoDTO dto) { // Recebe o DTO com os parâmetros
+    public List<PublicacaoListDTO> buscarPublicacoes(
+            @RequestParam(required = false) String numero,
+            @RequestParam(required = false) String termo,
+            @RequestParam(required = false) Integer ano,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(required = false) StatusPublicacao status) {
+
+        BuscaPublicacaoDTO dto = new BuscaPublicacaoDTO();
+        dto.setNumero(numero);
+        dto.setTermo(termo);
+        dto.setAno(ano);
+        dto.setDataInicial(dataInicial);
+        dto.setDataFinal(dataFinal);
+        dto.setStatus(status);
+
         return publicacaoService.searchPublicacoes(dto);
     }
 }

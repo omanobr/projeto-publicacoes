@@ -9,8 +9,13 @@
   outline: none;
 }
 
-.tiptap > * {
-  margin-bottom: 0.75em;
+.tiptap {
+  padding: 0.75rem;
+  min-height: 250px;
+  outline: none;
+  /* VVV--- ADICIONE ESTAS DUAS LINHAS ---VVV */
+  max-height: 74vh; /* Define uma altura máxima (60% da altura da tela) */
+  overflow-y: auto; /* Adiciona uma barra de rolagem vertical quando necessário */
 }
 
 .tiptap-menu {
@@ -53,4 +58,10 @@
   background-color: #e6f7ff; /* Fundo azul claro */
   border-bottom: 2px solid #91d5ff; /* Borda inferior azul */
   padding: 2px 0;
+}
+
+.tiptap s {
+  color: #c82333; /* Vermelho escuro */
+  text-decoration: line-through;
+  text-decoration-color: #c82333; /* Garante que a linha também seja vermelha */
 }

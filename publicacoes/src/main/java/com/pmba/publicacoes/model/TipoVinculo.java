@@ -4,5 +4,5 @@ public enum TipoVinculo {
     REVOGA,
     ALTERA,
     REVOGA_PARCIALMENTE,
-    CORRELACIONA
+    ACRESCENTA
 }

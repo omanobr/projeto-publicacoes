@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/vinculos")
@@ -45,5 +47,12 @@ public class VinculoController {
         vinculoService.excluirVinculo(id);
         return ResponseEntity.noContent().build(); // Retorna um status 204 No Content, que é ideal para exclusões bem-sucedidas
     }
+    @PostMapping("/batch")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void criarVinculosEmLote(@RequestBody List<CriarVinculoRequestDTO> requests) {
+        // Simplesmente passa a lista de requisições para o serviço
+        vinculoService.criarVinculosEmLote(requests);
+    }
+
 
 }

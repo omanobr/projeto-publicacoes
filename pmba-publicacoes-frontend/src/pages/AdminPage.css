@@ -209,3 +209,21 @@
     cursor: not-allowed;
 }
 /* ^^^--- FIM DOS NOVOS ESTILOS ---^^^ */
+
+/* VVV--- NOVA BARRA DE AÇÕES NO TOPO (COM ESTILO STICKY) ---VVV */
+.page-actions-top {
+  position: sticky; /* Faz o elemento "grudar" na tela */
+  top: 0; /* Define que ele deve grudar no topo */
+  z-index: 100; /* Garante que ele fique sobre outros conteúdos ao rolar */
+  background-color: #ffffff; /* Adiciona um fundo para não ficar transparente */
+  padding-top: 1rem; /* Adiciona um respiro acima dos botões */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra suave para destacar */
+  
+  /* --- Estilos que você já tinha e que vamos manter --- */
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem; /* Pequeno ajuste no padding inferior */
+  border-bottom: 1px solid #e0e0e0;
+}

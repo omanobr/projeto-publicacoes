@@ -1,14 +1,12 @@
+// Arquivo: src/components/AcrescentoModal.jsx (SUBSTITUA TODO O CONTEÚDO)
+
 import { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import PublicacaoSearch from './PublicacaoSearch.jsx';
-import '../pages/AdminPage.css';
+import '../pages/AdminPage.css'; // Reutilizamos os estilos
 
 // Estilos para o modal
 const customStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    zIndex: 1000
-  },
   content: {
     top: '50%',
     left: '50%',
@@ -22,19 +20,19 @@ const customStyles = {
     display: 'flex',
     flexDirection: 'column',
     padding: '0',
-    zIndex: 1001
   },
 };
 
 Modal.setAppElement('#root');
 
-function AlteracaoModal({ isOpen, onClose, onConfirm }) {
+function AcrescentoModal({ isOpen, onClose, onConfirm }) {
   const [step, setStep] = useState(1);
   const [publicacaoOrigem, setPublicacaoOrigem] = useState(null);
   const [conteudoOrigem, setConteudoOrigem] = useState('');
   const [loading, setLoading] = useState(false);
   const [novoTextoSelecionado, setNovoTextoSelecionado] = useState('');
 
+  // Efeito para buscar o conteúdo da publicação de origem quando ela for selecionada
   useEffect(() => {
     if (publicacaoOrigem) {
       setLoading(true);
@@ -42,37 +40,38 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
         .then(res => res.json())
         .then(data => {
           setConteudoOrigem(data.conteudoHtml);
-          setStep(2);
+          setStep(2); // Avança para o passo 2
           setLoading(false);
         })
         .catch(() => setLoading(false));
     }
   }, [publicacaoOrigem]);
   
-  // VVV--- FUNÇÃO DE SELEÇÃO CORRIGIDA ---VVV
+  // Captura o HTML do texto que o usuário seleciona na tela
   const handleSelectionChange = () => {
     const selection = window.getSelection();
-    // Se não houver seleção, limpa o estado
     if (!selection.rangeCount || selection.isCollapsed) {
         setNovoTextoSelecionado('');
         return;
     }
 
-    // Pega o conteúdo de texto puro da seleção, ignorando o HTML
-    const plainText = selection.toString().trim();
-    setNovoTextoSelecionado(plainText);
+    const range = selection.getRangeAt(0);
+    const container = document.createElement('div');
+    container.appendChild(range.cloneContents());
+    setNovoTextoSelecionado(container.innerHTML);
   };
-  // ^^^--- FIM DA CORREÇÃO ---^^^
 
+  // Confirma a operação e envia os dados para a EditPage
   const handleConfirmarClick = () => {
     if (novoTextoSelecionado) {
       onConfirm(publicacaoOrigem, novoTextoSelecionado);
       handleClose();
     } else {
-      alert('Por favor, selecione o novo texto.');
+      alert('Por favor, selecione o novo texto a ser acrescentado.');
     }
   };
   
+  // Reseta todos os estados ao fechar o modal
   const handleClose = () => {
     setStep(1);
     setPublicacaoOrigem(null);
@@ -83,20 +82,23 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
 
   return (
     <Modal isOpen={isOpen} onRequestClose={handleClose} style={customStyles}>
+      {/* PASSO 1: Buscar a publicação de origem */}
       {step === 1 && (
         <div className="modal-content-full">
-          <h2>Alterar Trecho: Passo 1/2</h2>
-          <p>Encontre a publicação que contém o novo texto (a publicação de origem).</p>
+          <h2>Acrescentar Trecho: Passo 1/2</h2>
+          <p>Encontre a publicação que contém o texto a ser acrescentado (a publicação de origem).</p>
           <PublicacaoSearch onPublicacaoSelect={setPublicacaoOrigem} />
           {loading && <p>A carregar...</p>}
           <button onClick={handleClose} style={{ marginTop: '1rem', backgroundColor: '#6c757d' }}>Cancelar</button>
         </div>
       )}
+
+      {/* PASSO 2: Selecionar o texto na publicação de origem */}
       {step === 2 && (
         <div className="modal-layout">
           <div className="modal-header">
-            <h2>Alterar Trecho: Passo 2/2</h2>
-            <p>Agora, selecione o <strong>novo texto</strong> no documento abaixo. O texto aparecerá na área de revisão para confirmação.</p>
+            <h2>Acrescentar Trecho: Passo 2/2</h2>
+            <p>Agora, selecione o <strong>texto a ser acrescentado</strong> no documento abaixo.</p>
           </div>
           
           <div className="modal-scrollable-content" onMouseUp={handleSelectionChange}>
@@ -105,23 +107,18 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
 
           <div className="modal-footer">
             <div className="selection-review">
-              <h4>Texto Selecionado para Revisão:</h4>
-              {/* VVV--- RENDERIZAÇÃO CORRIGIDA PARA TEXTO PURO ---VVV */}
-              <div className="selection-box">
-                {novoTextoSelecionado ? (
-                  <p style={{ margin: 0 }}>{novoTextoSelecionado}</p>
-                ) : (
-                  <em>Nenhum texto selecionado.</em>
-                )}
-              </div>
-              {/* ^^^--- FIM DA CORREÇÃO ---^^^ */}
+              <h4>Texto Selecionado para Acréscimo:</h4>
+              <div 
+                className="selection-box"
+                dangerouslySetInnerHTML={{ __html: novoTextoSelecionado || '<em>Nenhum texto selecionado.</em>' }}
+              />
             </div>
             <div className="modal-actions">
                 <button 
                     onClick={handleConfirmarClick} 
                     disabled={!novoTextoSelecionado}
                 >
-                    Confirmar Alteração
+                    Confirmar Acréscimo
                 </button>
                 <button onClick={handleClose} style={{ backgroundColor: '#6c757d' }}>Cancelar</button>
             </div>
@@ -132,5 +129,4 @@ function AlteracaoModal({ isOpen, onClose, onConfirm }) {
   );
 }
 
-export default AlteracaoModal;
-
+export default AcrescentoModal;

@@ -4,7 +4,9 @@ import RichTextEditor from '../components/RichTextEditor';
 import RevogacaoModal from '../components/RevogacaoModal';
 import AlteracaoModal from '../components/AlteracaoModal';
 import VinculosPanel from '../components/VinculosPanel';
-import ScrollToTopButton from '../components/ScrollToTopButton'; // VVV--- IMPORTAÇÃO ADICIONADA ---VVV
+import ScrollToTopButton from '../components/ScrollToTopButton';
+import AcrescentoModal from '../components/AcrescentoModal';
+import BatchEditModal from '../components/BatchEditModal';
 import './AdminPage.css';
 
 function EditPage() {
@@ -19,6 +21,8 @@ function EditPage() {
     
     const [isRevogacaoModalOpen, setIsRevogacaoModalOpen] = useState(false);
     const [isAlteracaoModalOpen, setIsAlteracaoModalOpen] = useState(false);
+    const [isAcrescentoModalOpen, setIsAcrescentoModalOpen] = useState(false);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
     const [isRevogacaoTotalModalOpen, setIsRevogacaoTotalModalOpen] = useState(false);
     
     const [textoSelecionado, setTextoSelecionado] = useState('');
@@ -131,6 +135,42 @@ function EditPage() {
         }
     };
 
+    const handleAcrescentarTrechoClick = () => {
+        if (!editorInstance) return;
+        const { from, to } = editorInstance.state.selection;
+        const selectedText = editorInstance.state.doc.textBetween(from, to);
+        if (selectedText) {
+            setTextoSelecionado(selectedText); // O texto selecionado será a nossa referência
+            setIsAcrescentoModalOpen(true);
+        } else {
+            alert('Por favor, selecione um trecho de texto de referência no editor primeiro.');
+        }
+    };
+    const handleConfirmAcrescento = (publicacaoOrigem, textoParaAdicionar) => {
+        const vinculoData = {
+            publicacaoOrigemId: publicacaoOrigem.id,
+            publicacaoDestinoId: parseInt(id),
+            tipoVinculo: 'ACRESCENTA',
+            textoDoTrecho: textoSelecionado, // O texto de referência selecionado no editor
+            textoNovo: textoParaAdicionar,  // O novo texto digitado no modal
+        };
+
+        fetch(`http://localhost:8080/api/vinculos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vinculoData),
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Falha ao criar o vínculo de acréscimo.');
+            return res.json();
+        })
+        .then(() => {
+            alert('Acréscimo vinculado com sucesso!');
+            fetchData(); // Recarrega os dados para exibir as mudanças
+        })
+        .catch(err => setErro(err.message));
+    };
+
     const handleConfirmRevogacaoParcial = (publicacaoOrigem, tipoVinculoEscolhido) => {
         const vinculoData = {
             publicacaoOrigemId: publicacaoOrigem.id,
@@ -196,6 +236,27 @@ function EditPage() {
         .catch(err => setErro(err.message));
     }, [id, navigate]);
 
+
+    const handleSaveBatch = useCallback((alteracoes) => {
+        setEnviando(true);
+        setErro(null);
+        fetch(`http://localhost:8080/api/vinculos/batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(alteracoes),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Falha ao salvar as alterações em lote.');
+            }
+            alert(`${alteracoes.length} alterações salvas com sucesso!`);
+            fetchData(); // Recarrega os dados da página
+        })
+        .catch(err => setErro(err.message))
+        .finally(() => setEnviando(false));
+    }, [fetchData]);
+    // ^^^--- FIM DA NOVA FUNÇÃO ---^^^
+
     if (loading) return <p>Carregando...</p>;
     if (erro) return <p>Erro: {erro}</p>;
     if (!formData) return <p>Nenhum dado encontrado.</p>;
@@ -206,9 +267,20 @@ function EditPage() {
             <h2>Editar Publicação</h2>
 
              <div className="page-actions-top">
+                
                 <button type="submit" form="edit-form-id" disabled={enviando}>
                     {enviando ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
+                {/* VVV--- 4. ADICIONAR O BOTÃO PARA ABRIR O MODAL ---VVV */}
+                <button 
+                    type="button" 
+                    onClick={() => setIsBatchModalOpen(true)}
+                    style={{backgroundColor: '#28a745'}}
+                >
+                    Alteração Normativa em Lote...
+                </button>
+                {/* ^^^--- FIM DO BOTÃO ---^^^ */}
+
                 <button 
                     type="button" 
                     className="revoke-button" 
@@ -269,6 +341,7 @@ function EditPage() {
                                 onEditorInstance={handleEditorInstance}
                                 onRevogarClick={handleRevogarTrechoClick}
                                 onAlterarClick={handleAlterarTrechoClick}
+                                onAcrescentarClick={handleAcrescentarTrechoClick} // <-- 4. Passe a nova função
                             />
                         </div>
                         {erro && <p className="error-message">{erro}</p>}
@@ -284,6 +357,22 @@ function EditPage() {
                 />
             )}
 
+
+            {/* VVV--- 5. RENDERIZAR O NOVO MODAL ---VVV */}
+            {formData && (
+                <BatchEditModal
+                    isOpen={isBatchModalOpen}
+                    onClose={() => setIsBatchModalOpen(false)}
+                    onSave={handleSaveBatch}
+                    publicacaoDestino={formData}
+                />
+            )}
+            <AcrescentoModal
+                isOpen={isAcrescentoModalOpen}
+                onClose={() => setIsAcrescentoModalOpen(false)}
+                onConfirm={handleConfirmAcrescento}
+                trechoDeReferencia={textoSelecionado}
+            />
             <RevogacaoModal
                 isOpen={isRevogacaoModalOpen}
                 onClose={() => setIsRevogacaoModalOpen(false)}

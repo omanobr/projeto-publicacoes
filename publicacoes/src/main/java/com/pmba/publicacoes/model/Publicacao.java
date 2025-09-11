@@ -26,17 +26,13 @@ public class Publicacao {
     private LocalDate dataPublicacao;
     private String bgo;
 
-    // VVV--- ALTERAÇÃO AQUI ---VVV
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @ColumnDefault("'ATIVA'")
     private StatusPublicacao status;
 
-    // VVV--- ALTERAÇÃO AQUI ---VVV
-    // @Lob // REMOVA ESTA LINHA
     @Column(columnDefinition = "TEXT")
     private String conteudoHtml;
-    // ^^^--- FIM DA ALTERAÇÃO ---^^^
 
     @OneToMany(mappedBy = "publicacaoOrigem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<VinculoNormativo> vinculosGerados = new HashSet<>();

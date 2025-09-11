@@ -4,7 +4,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { MetaMark } from '../tiptap-extensions/metaMark';
 import './RichTextEditor.css';
 
-const MenuBar = ({ editor, onRevogarClick, onAlterarClick }) => {
+// 1. Adicione "onAcrescentarClick" aos parâmetros do MenuBar
+const MenuBar = ({ editor, onRevogarClick, onAlterarClick, onAcrescentarClick }) => {
   if (!editor) return null;
 
   const setAsTitle = () => {
@@ -38,6 +39,16 @@ const MenuBar = ({ editor, onRevogarClick, onAlterarClick }) => {
         Alterar Trecho ✍️
       </button>
 
+      {/* VVV--- 2. BOTÃO ADICIONADO AQUI ---VVV */}
+      <button
+        type="button"
+        onClick={onAcrescentarClick}
+        disabled={editor.state.selection.empty}
+      >
+        Acrescentar Trecho ➕
+      </button>
+      {/* ^^^--- FIM DO BOTÃO ---^^^ */}
+
       <div className="separator"></div>
       <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}>Negrito</button>
       <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}>Itálico</button>
@@ -45,7 +56,8 @@ const MenuBar = ({ editor, onRevogarClick, onAlterarClick }) => {
   );
 };
 
-const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarClick, onAlterarClick }) => {
+// 3. Adicione "onAcrescentarClick" aos parâmetros do RichTextEditor
+const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarClick, onAlterarClick, onAcrescentarClick }) => {
   const [_, setForceUpdate] = useState(0);
 
   const editor = useEditor({
@@ -55,17 +67,11 @@ const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarC
     onSelectionUpdate: () => { setForceUpdate(val => val + 1); }
   });
 
-  // VVV--- ADICIONE ESTE BLOCO DE CÓDIGO ---VVV
-  // Este hook observa mudanças na propriedade 'content'.
-  // Se o conteúdo externo (prop) for diferente do conteúdo interno do editor,
-  // ele força a atualização do editor.
   useEffect(() => {
     if (editor && editor.getHTML() !== content) {
-      // O 'false' no final evita que a função onUpdate seja chamada, prevenindo um loop infinito.
       editor.commands.setContent(content, false);
     }
   }, [content, editor]);
-  // ^^^--- FIM DO BLOCO ADICIONADO ---^^^
   
   useEffect(() => {
     if (editor && onEditorInstance) {
@@ -75,7 +81,8 @@ const RichTextEditor = ({ content, onContentChange, onEditorInstance, onRevogarC
 
   return (
     <div className="tiptap-container">
-      <MenuBar editor={editor} onRevogarClick={onRevogarClick} onAlterarClick={onAlterarClick} />
+      {/* 4. Passe "onAcrescentarClick" para o MenuBar */}
+      <MenuBar editor={editor} onRevogarClick={onRevogarClick} onAlterarClick={onAlterarClick} onAcrescentarClick={onAcrescentarClick} />
       <EditorContent editor={editor} />
     </div>
   );

@@ -4,6 +4,10 @@ import PublicacaoSearch from './PublicacaoSearch';
 
 // Estilos para o modal
 const customStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 1000
+  },
   content: {
     top: '50%',
     left: '50%',
@@ -18,6 +22,7 @@ const customStyles = {
     border: '1px solid #ccc',
     borderRadius: '8px',
     padding: '2rem',
+    zIndex: 1001
   },
 };
 
